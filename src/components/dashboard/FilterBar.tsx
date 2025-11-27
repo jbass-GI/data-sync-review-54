@@ -106,6 +106,7 @@ export function FilterBar({
   const resetFilters = () => {
     onFiltersChange({
       datePreset: 'mtd',
+      dealType: 'all',
       partners: [],
       channelTypes: [],
       lifecycleTypes: [],
@@ -118,6 +119,7 @@ export function FilterBar({
   const clearAllFilters = () => {
     onFiltersChange({
       datePreset: 'all',
+      dealType: 'all',
       partners: [],
       channelTypes: [],
       lifecycleTypes: [],
@@ -130,6 +132,7 @@ export function FilterBar({
   const getActiveFilterCount = () => {
     let count = 0;
     if (filters.datePreset !== 'mtd' && filters.datePreset !== 'all') count++;
+    if (filters.dealType !== 'all') count++;
     if (filters.partners.length > 0) count += filters.partners.length;
     if (filters.channelTypes.length > 0) count += filters.channelTypes.length;
     if (filters.lifecycleTypes.length > 0) count += filters.lifecycleTypes.length;
@@ -169,6 +172,23 @@ export function FilterBar({
               </SelectContent>
             </Select>
           )}
+
+          {/* Deal Type Filter */}
+          <Select 
+            value={filters.dealType} 
+            onValueChange={(value: 'all' | 'new' | 'renewal') => 
+              onFiltersChange({ ...filters, dealType: value })
+            }
+          >
+            <SelectTrigger className="w-[140px] bg-background">
+              <SelectValue placeholder="Deal Type" />
+            </SelectTrigger>
+            <SelectContent className="bg-background z-50">
+              <SelectItem value="all">All Deals</SelectItem>
+              <SelectItem value="new">New Only</SelectItem>
+              <SelectItem value="renewal">Renewal Only</SelectItem>
+            </SelectContent>
+          </Select>
 
           {/* Partner/ISO Multi-Select */}
           <Popover>
@@ -362,6 +382,16 @@ export function FilterBar({
                 <X 
                   className="h-3 w-3 cursor-pointer" 
                   onClick={() => handleDatePresetChange('mtd')}
+                />
+              </Badge>
+            )}
+
+            {filters.dealType !== 'all' && (
+              <Badge variant="secondary" className="gap-1">
+                {filters.dealType === 'new' ? 'New Only' : 'Renewal Only'}
+                <X 
+                  className="h-3 w-3 cursor-pointer" 
+                  onClick={() => onFiltersChange({ ...filters, dealType: 'all' })}
                 />
               </Badge>
             )}

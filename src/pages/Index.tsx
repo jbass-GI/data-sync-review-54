@@ -22,6 +22,7 @@ const Index = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [filters, setFilters] = useState<DashboardFilters>({
     datePreset: 'mtd', // Default to Month-to-Date
+    dealType: 'all',
     partners: [],
     channelTypes: [],
     lifecycleTypes: [],
@@ -38,6 +39,7 @@ const Index = () => {
       // Reset filters to MTD when new data is uploaded
       setFilters({
         datePreset: 'mtd',
+        dealType: 'all',
         partners: [],
         channelTypes: [],
         lifecycleTypes: [],
