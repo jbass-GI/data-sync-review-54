@@ -12,6 +12,7 @@ interface ConsistencyMetrics {
   consecutiveNewDeals: number;
   consecutiveRenewalDeals: number;
   daysWithMultipleDeals: number;
+  maxDealsInDay: number;
   consistencyScore: number;
 }
 
@@ -89,6 +90,7 @@ export function calculateConsistencyMetrics(deals: Deal[]): ConsistencyMetrics {
       consecutiveNewDeals: 0,
       consecutiveRenewalDeals: 0,
       daysWithMultipleDeals: 0,
+      maxDealsInDay: 0,
       consistencyScore: 0
     };
   }
@@ -153,6 +155,9 @@ export function calculateConsistencyMetrics(deals: Deal[]): ConsistencyMetrics {
   const daysWithMultipleDeals = Array.from(dealsByDay.values())
     .filter(deals => deals.length >= 2).length;
   
+  // Find max deals in a single day
+  const maxDealsInDay = Math.max(...Array.from(dealsByDay.values()).map(deals => deals.length), 0);
+  
   // Calculate average deals per funding day (volume intensity)
   const totalFundingDays = dealsByDay.size;
   const avgDealsPerDay = deals.length / totalFundingDays;
@@ -183,6 +188,7 @@ export function calculateConsistencyMetrics(deals: Deal[]): ConsistencyMetrics {
     consecutiveNewDeals,
     consecutiveRenewalDeals,
     daysWithMultipleDeals,
+    maxDealsInDay,
     consistencyScore
   };
 }

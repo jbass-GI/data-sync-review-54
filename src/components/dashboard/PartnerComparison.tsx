@@ -182,6 +182,10 @@ export function PartnerComparison({ partners }: PartnerComparisonProps) {
                                     <span className="font-semibold">{partner.daysWithMultipleDeals || 0} days</span>
                                   </div>
                                   <div className="flex justify-between gap-4">
+                                    <span className="text-muted-foreground">Max deals in day:</span>
+                                    <span className="font-semibold">{partner.maxDealsInDay || 0} deals</span>
+                                  </div>
+                                  <div className="flex justify-between gap-4">
                                     <span className="text-muted-foreground">Consecutive new deals:</span>
                                     <span className="font-semibold">{partner.consecutiveNewDeals || 0}</span>
                                   </div>
