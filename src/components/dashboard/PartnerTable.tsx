@@ -140,9 +140,12 @@ export function PartnerTable({ partners, partnerMerges, onPartnerMergesChange }:
   };
 
   return (
-    <Card className="p-6 border-border/50 bg-card/50 backdrop-blur">
+    <Card className="p-6 border-border/50 bg-card/50 backdrop-blur hover:card-glow transition-all duration-300">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl font-bold">Partner Performance</h2>
+        <div className="flex items-center gap-2">
+          <div className="h-8 w-1 bg-gradient-to-b from-primary to-accent rounded-full" />
+          <h2 className="text-xl font-bold text-gradient">Partner Performance</h2>
+        </div>
         <div className="flex items-center gap-2">
           {partnerMerges.size > 0 && !mergeMode && (
             <Button
@@ -306,14 +309,14 @@ export function PartnerTable({ partners, partnerMerges, onPartnerMergesChange }:
                   </div>
                 </TableCell>
                 <TableCell>
-                  <Badge variant="outline" className={getChannelColor(partner.channelType)}>
-                    {partner.channelType}
-                  </Badge>
+    <Badge variant="outline" className={`${getChannelColor(partner.channelType)} border-2 font-medium`}>
+      {partner.channelType}
+    </Badge>
                 </TableCell>
                 <TableCell className="text-right font-semibold">
                   {formatCurrency(partner.totalFunded)}
                 </TableCell>
-                <TableCell className="text-right text-primary font-semibold">
+                <TableCell className="text-right font-semibold text-primary">
                   {formatCurrency(partner.totalFees)}
                 </TableCell>
                 <TableCell className="text-right">{partner.dealCount}</TableCell>

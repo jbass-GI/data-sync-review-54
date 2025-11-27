@@ -153,11 +153,13 @@ export function PartnerComparison({ partners }: PartnerComparisonProps) {
   return (
     <div className="space-y-6">
       {/* Top Partners Leaderboard */}
-      <Card>
+      <Card className="hover:card-glow transition-all duration-300">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Trophy className="h-5 w-5 text-primary" />
-            Partner Rankings
+          <CardTitle className="flex items-center gap-3">
+            <div className="p-2 bg-gradient-to-br from-primary/20 to-accent/10 rounded-lg border border-primary/20">
+              <Trophy className="h-5 w-5 text-primary" />
+            </div>
+            <span className="text-gradient">Partner Rankings</span>
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -360,11 +362,13 @@ export function PartnerComparison({ partners }: PartnerComparisonProps) {
       </Card>
 
       {/* Head-to-Head Comparison */}
-      <Card>
+      <Card className="hover:card-glow transition-all duration-300">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Users className="h-5 w-5 text-primary" />
-            Head-to-Head Comparison
+          <CardTitle className="flex items-center gap-3">
+            <div className="p-2 bg-gradient-to-br from-primary/20 to-accent/10 rounded-lg border border-primary/20">
+              <Users className="h-5 w-5 text-primary" />
+            </div>
+            <span className="text-gradient">Head-to-Head Comparison</span>
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">

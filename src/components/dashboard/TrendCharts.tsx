@@ -57,12 +57,14 @@ export function TrendCharts({ weeklyTrends, monthlyTrends }: TrendChartsProps) {
   };
 
   return (
-    <Card className="col-span-full" data-chart="trends">
+    <Card className="col-span-full hover:card-glow transition-all duration-300" data-chart="trends">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <TrendingUp className="h-5 w-5 text-primary" />
-          Production Trends
-        </CardTitle>
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-gradient-to-br from-primary/20 to-accent/10 rounded-lg border border-primary/20">
+            <TrendingUp className="h-5 w-5 text-primary" />
+          </div>
+          <CardTitle className="text-gradient">Production Trends</CardTitle>
+        </div>
       </CardHeader>
       <CardContent>
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'weekly' | 'monthly')}>

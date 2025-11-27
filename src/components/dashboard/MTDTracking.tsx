@@ -37,17 +37,19 @@ export function MTDTracking({ metrics }: MTDTrackingProps) {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
       {/* Projections Card */}
-      <Card className="metric-card">
+      <Card className="metric-card hover:card-glow transition-all duration-300 border-primary/20">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <Target className="h-5 w-5 text-primary" />
-            Month-End Projection
+          <CardTitle className="flex items-center gap-3 text-lg">
+            <div className="p-2 bg-gradient-to-br from-primary/20 to-accent/10 rounded-lg border border-primary/20">
+              <Target className="h-5 w-5 text-primary" />
+            </div>
+            <span className="text-gradient">Month-End Projection</span>
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
             <div className="flex items-baseline gap-2">
-              <span className="text-3xl font-bold">
+              <span className="text-3xl font-bold text-gradient">
                 {formatCompactCurrency(metrics.projectedMonthEnd)}
               </span>
               <Badge variant={getStatusBadgeVariant(metrics.paceStatus)} className="text-xs">
@@ -90,11 +92,13 @@ export function MTDTracking({ metrics }: MTDTrackingProps) {
       </Card>
 
       {/* Burn Rate Card */}
-      <Card className="metric-card">
+      <Card className="metric-card hover:card-glow transition-all duration-300 border-accent/20">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <Zap className="h-5 w-5 text-primary" />
-            Burn Rate Analysis
+          <CardTitle className="flex items-center gap-3 text-lg">
+            <div className="p-2 bg-gradient-to-br from-accent/20 to-primary/10 rounded-lg border border-accent/20">
+              <Zap className="h-5 w-5 text-accent" />
+            </div>
+            <span className="text-gradient">Burn Rate Analysis</span>
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -150,11 +154,13 @@ export function MTDTracking({ metrics }: MTDTrackingProps) {
       </Card>
 
       {/* Pace to Target Card */}
-      <Card className="metric-card">
+      <Card className="metric-card hover:card-glow transition-all duration-300 border-success/20">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <Activity className="h-5 w-5 text-primary" />
-            Pace to Target
+          <CardTitle className="flex items-center gap-3 text-lg">
+            <div className="p-2 bg-gradient-to-br from-success/20 to-accent/10 rounded-lg border border-success/20">
+              <Activity className="h-5 w-5 text-success" />
+            </div>
+            <span className="text-gradient">Pace to Target</span>
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">

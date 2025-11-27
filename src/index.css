@@ -17,8 +17,9 @@ All colors MUST be HSL.
     --popover: 220 15% 10%;
     --popover-foreground: 210 20% 98%;
 
-    --primary: 207 74% 45%;
+    --primary: 207 90% 54%;
     --primary-foreground: 210 20% 98%;
+    --primary-glow: 207 90% 64%;
 
     --secondary: 220 15% 15%;
     --secondary-foreground: 210 20% 98%;
@@ -26,7 +27,7 @@ All colors MUST be HSL.
     --muted: 220 15% 14%;
     --muted-foreground: 210 10% 60%;
 
-    --accent: 207 74% 55%;
+    --accent: 195 85% 48%;
     --accent-foreground: 210 20% 98%;
 
     --success: 145 65% 45%;
@@ -40,15 +41,18 @@ All colors MUST be HSL.
 
     --border: 220 15% 18%;
     --input: 220 15% 18%;
-    --ring: 207 74% 45%;
+    --ring: 207 90% 54%;
 
     --radius: 0.5rem;
 
-    --chart-1: 207 74% 45%;
-    --chart-2: 145 65% 45%;
-    --chart-3: 265 75% 60%;
+    --chart-1: 207 90% 54%;
+    --chart-2: 195 85% 48%;
+    --chart-3: 145 65% 45%;
     --chart-4: 35 90% 55%;
-    --chart-5: 0 75% 55%;
+    --chart-5: 265 75% 60%;
+    
+    --brand-gradient: linear-gradient(135deg, hsl(207 90% 54%) 0%, hsl(195 85% 48%) 100%);
+    --brand-glow: 0 0 40px hsl(207 90% 54% / 0.3);
   }
 }
 
@@ -68,7 +72,7 @@ All colors MUST be HSL.
   }
   
   .card-glow {
-    box-shadow: 0 0 20px -5px hsl(var(--primary) / 0.3);
+    box-shadow: 0 0 40px -10px hsl(var(--primary) / 0.4);
   }
   
   .metric-card {
@@ -77,6 +81,38 @@ All colors MUST be HSL.
   
   .metric-card::before {
     content: '';
-    @apply absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent pointer-events-none;
+    @apply absolute inset-0 bg-gradient-to-br from-primary/10 to-accent/5 pointer-events-none;
+  }
+  
+  .brand-gradient {
+    background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--accent)) 100%);
+  }
+  
+  .brand-border {
+    border-image: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--accent)) 100%) 1;
+  }
+  
+  .logo-glow {
+    filter: drop-shadow(0 0 20px hsl(var(--primary) / 0.5));
+  }
+  
+  .stat-highlight {
+    @apply relative;
+  }
+  
+  .stat-highlight::after {
+    content: '';
+    @apply absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-primary via-accent to-primary;
+    animation: shimmer 3s infinite;
+  }
+  
+  @keyframes shimmer {
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 1; }
+  }
+  
+  .chart-brand-accent {
+    stroke: hsl(var(--primary));
+    fill: hsl(var(--primary) / 0.1);
   }
 }
