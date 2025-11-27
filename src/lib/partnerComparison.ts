@@ -41,7 +41,7 @@ export function calculatePartnerRankings(partners: PartnerMetrics[]): PartnerRan
 
     // Overall rank is based on total funded (primary metric)
     const rank = fundedRank;
-    const percentileRank = ((partners.length - rank + 1) / partners.length) * 100;
+    const percentileRank = (rank / partners.length) * 100;
 
     return {
       ...partner,
