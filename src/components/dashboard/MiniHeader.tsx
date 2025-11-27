@@ -13,12 +13,13 @@ interface MiniHeaderProps {
   filters: DashboardFilters;
   onFiltersChange: (filters: DashboardFilters) => void;
   isVisible: boolean;
+  hasMTDData?: boolean;
 }
 
-export function MiniHeader({ filters, onFiltersChange, isVisible }: MiniHeaderProps) {
+export function MiniHeader({ filters, onFiltersChange, isVisible, hasMTDData = true }: MiniHeaderProps) {
   const handleResetToMTD = () => {
     onFiltersChange({
-      datePreset: 'mtd',
+      datePreset: hasMTDData ? 'mtd' : 'all',
       dealType: 'all',
       partners: [],
       channelTypes: [],
@@ -64,7 +65,7 @@ export function MiniHeader({ filters, onFiltersChange, isVisible }: MiniHeaderPr
                 <SelectValue placeholder="Date Range" />
               </SelectTrigger>
               <SelectContent className="bg-background z-[60]">
-                <SelectItem value="mtd">Month-to-Date</SelectItem>
+                {hasMTDData && <SelectItem value="mtd">Month-to-Date</SelectItem>}
                 <SelectItem value="ytd">Year-to-Date</SelectItem>
                 <SelectItem value="last30">Last 30 Days</SelectItem>
                 <SelectItem value="last90">Last 90 Days</SelectItem>
@@ -98,7 +99,7 @@ export function MiniHeader({ filters, onFiltersChange, isVisible }: MiniHeaderPr
               onClick={handleResetToMTD}
               className="h-9 bg-background/80 hover:bg-primary/10"
             >
-              Reset to MTD
+              {hasMTDData ? 'Reset to MTD' : 'Reset Filters'}
             </Button>
             <Button 
               variant={filters.datePreset === 'all' ? 'default' : 'outline'}

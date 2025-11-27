@@ -38,6 +38,7 @@ interface FilterBarProps {
   deals: Deal[];
   onComparisonToggle?: () => void;
   isComparisonActive?: boolean;
+  hasMTDData?: boolean;
 }
 
 export function FilterBar({ 
@@ -48,7 +49,8 @@ export function FilterBar({
   availableQuarters,
   deals,
   onComparisonToggle,
-  isComparisonActive = false
+  isComparisonActive = false,
+  hasMTDData = true
 }: FilterBarProps) {
   const [partnerSearch, setPartnerSearch] = useState('');
   
@@ -114,7 +116,7 @@ export function FilterBar({
 
   const resetFilters = () => {
     onFiltersChange({
-      datePreset: 'mtd',
+      datePreset: hasMTDData ? 'mtd' : 'all',
       dealType: 'all',
       partners: [],
       channelTypes: [],
@@ -384,7 +386,7 @@ export function FilterBar({
 
           {/* Reset/Clear Buttons */}
           <Button variant="ghost" size="sm" onClick={resetFilters}>
-            Reset to MTD
+            {hasMTDData ? 'Reset to MTD' : 'Reset Filters'}
           </Button>
           {activeCount > 0 && (
             <Button variant="ghost" size="sm" onClick={clearAllFilters}>
