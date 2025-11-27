@@ -9,15 +9,21 @@ interface MetricCardProps {
   icon: LucideIcon;
   trend?: 'up' | 'down' | 'neutral';
   trendValue?: string;
+  comparisonValue?: string;
 }
 
-export function MetricCard({ title, value, subValue, icon: Icon, trend, trendValue }: MetricCardProps) {
+export function MetricCard({ title, value, subValue, icon: Icon, trend, trendValue, comparisonValue }: MetricCardProps) {
   return (
     <Card className="metric-card p-6 border-border/50 bg-card/50 backdrop-blur hover:card-glow transition-all duration-300 group">
       <div className="flex items-start justify-between">
         <div className="flex-1">
           <p className="text-sm text-muted-foreground mb-2 font-medium">{title}</p>
           <h3 className="text-3xl font-bold stat-highlight bg-gradient-to-br from-foreground to-foreground/80 bg-clip-text">{value}</h3>
+          {comparisonValue && (
+            <p className="text-xs text-muted-foreground mt-1">
+              Prior: <span className="font-semibold">{comparisonValue}</span>
+            </p>
+          )}
           {subValue && (
             <p className="text-sm text-accent/80 mt-1 font-medium">{subValue}</p>
           )}
