@@ -40,28 +40,36 @@ function isUSBankHoliday(date: Date): boolean {
 function calculateConsecutiveBusinessDays(dealDays: DealDay[]): number {
   if (dealDays.length === 0) return 0;
   
-  // Sort by date descending (most recent first)
-  const sorted = [...dealDays].sort((a, b) => b.date.localeCompare(a.date));
+  // Create a map of dates with deals for fast lookup
+  const dealDateMap = new Map<string, DealDay>();
+  dealDays.forEach(dd => {
+    dealDateMap.set(dd.date, dd);
+  });
+  
+  // Find the most recent deal date
+  const mostRecentDate = [...dealDays]
+    .sort((a, b) => b.date.localeCompare(a.date))[0].date;
   
   let consecutiveDays = 0;
-  let expectedDate = new Date(sorted[0].date);
+  let currentDate = new Date(mostRecentDate);
   
-  for (const dealDay of sorted) {
-    const currentDate = new Date(dealDay.date);
+  // Walk backwards from most recent date, checking each business day
+  while (true) {
+    const dateKey = format(currentDate, 'yyyy-MM-dd');
     
-    // Check if this is the expected business day
-    if (format(currentDate, 'yyyy-MM-dd') === format(expectedDate, 'yyyy-MM-dd')) {
-      if (dealDay.isBusinessDay && dealDay.deals.length > 0) {
-        consecutiveDays++;
-        
-        // Move to previous business day
-        do {
-          expectedDate.setDate(expectedDate.getDate() - 1);
-        } while (isWeekend(expectedDate) || isUSBankHoliday(expectedDate));
-      } else {
-        break;
-      }
+    // Skip weekends and holidays
+    if (isWeekend(currentDate) || isUSBankHoliday(currentDate)) {
+      currentDate.setDate(currentDate.getDate() - 1);
+      continue;
+    }
+    
+    // Check if this business day has deals
+    const dealDay = dealDateMap.get(dateKey);
+    if (dealDay && dealDay.deals.length > 0) {
+      consecutiveDays++;
+      currentDate.setDate(currentDate.getDate() - 1);
     } else {
+      // Found a business day with no deals - streak ends
       break;
     }
   }
