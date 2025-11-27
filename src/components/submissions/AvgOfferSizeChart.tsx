@@ -1,12 +1,13 @@
 import { ISOMetrics } from '@/types/submission';
 import { Card } from '@/components/ui/card';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList, Cell } from 'recharts';
 
 interface AvgOfferSizeChartProps {
   metrics: ISOMetrics[];
+  selectedISO?: string | null;
 }
 
-export function AvgOfferSizeChart({ metrics }: AvgOfferSizeChartProps) {
+export function AvgOfferSizeChart({ metrics, selectedISO }: AvgOfferSizeChartProps) {
   const data = metrics
     .sort((a, b) => b.avgOfferAmount - a.avgOfferAmount)
     .map(m => ({
@@ -35,7 +36,20 @@ export function AvgOfferSizeChart({ metrics }: AvgOfferSizeChartProps) {
                 borderRadius: '6px'
               }}
             />
-            <Bar dataKey="avgOffer" fill="hsl(142 76% 36%)" radius={[0, 4, 4, 0]} />
+            <Bar dataKey="avgOffer" radius={[0, 4, 4, 0]}>
+              {data.map((entry) => (
+                <Cell 
+                  key={entry.iso} 
+                  fill={selectedISO === entry.iso ? 'hsl(var(--destructive))' : 'hsl(142 76% 36%)'} 
+                />
+              ))}
+              <LabelList 
+                dataKey="avgOffer" 
+                position="right"
+                formatter={(value: number) => formatCurrency(value)}
+                style={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }}
+              />
+            </Bar>
           </BarChart>
         </ResponsiveContainer>
       </div>
