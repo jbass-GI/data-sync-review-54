@@ -409,6 +409,7 @@ const Index = () => {
       offersMade,
       avgPipeline: Math.round(avgDays)
     };
+  }, [filteredSubmissions]);
   
   // Phase 3: Advanced analytics (only with funding data)
   const repPerformance = useMemo(() => 
