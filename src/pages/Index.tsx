@@ -27,6 +27,9 @@ import { applySubmissionFilters, SubmissionFilters, getFilterOptions as getSubmi
 import { calculateISOMetrics, getTopISOsByVolume, getSubmissionTimeline } from '@/lib/isoMetrics';
 import { matchSubmissionsToFunding } from '@/lib/fundingMatcher';
 import { enrichSubmissionsWithFunding, calculateConversionMetrics, calculateOverallStats, EnrichedSubmission } from '@/lib/conversionMetrics';
+import { calculateRepPerformance, RepPerformance } from '@/lib/repPerformance';
+import { calculateMonthlyTrends as calculateISOMonthlyTrends, MonthlyTrend } from '@/lib/trendAnalysisISO';
+import { calculateAllQualityScores, generatePerformanceAlerts, ISOQualityScore, PerformanceAlert } from '@/lib/qualityScore';
 import { SubmissionUpload } from '@/components/submissions/SubmissionUpload';
 import { DataQualityCard } from '@/components/submissions/DataQualityCard';
 import { ISOSummaryTable } from '@/components/submissions/ISOSummaryTable';
@@ -41,6 +44,12 @@ import { UnmatchedReview } from '@/components/submissions/UnmatchedReview';
 import { ConversionTable } from '@/components/submissions/ConversionTable';
 import { ConversionFunnel } from '@/components/submissions/ConversionFunnel';
 import { EfficiencyScatter } from '@/components/submissions/EfficiencyScatter';
+import { RepPerformanceTable } from '@/components/submissions/RepPerformanceTable';
+import { RepLeaderboard } from '@/components/submissions/RepLeaderboard';
+import { ConversionTrendChart } from '@/components/submissions/ConversionTrendChart';
+import { QualityScoreCard } from '@/components/submissions/QualityScoreCard';
+import { QualityScoreGrid } from '@/components/submissions/QualityScoreGrid';
+import { PerformanceAlerts } from '@/components/submissions/PerformanceAlerts';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import glazerLogo from '@/assets/glazer-logo.png';
 
@@ -400,7 +409,31 @@ const Index = () => {
       offersMade,
       avgPipeline: Math.round(avgDays)
     };
-  }, [filteredSubmissions]);
+  
+  // Phase 3: Advanced analytics (only with funding data)
+  const repPerformance = useMemo(() => 
+    hasFundingData ? calculateRepPerformance(filteredSubmissions as EnrichedSubmission[]) : [],
+    [filteredSubmissions, hasFundingData]
+  );
+  
+  const isoMonthlyTrends = useMemo(() => 
+    hasFundingData ? calculateISOMonthlyTrends(enrichedSubmissions) : [],
+    [enrichedSubmissions, hasFundingData]
+  );
+  
+  const qualityScores = useMemo(() => 
+    hasFundingData && conversionMetrics.length > 0 
+      ? calculateAllQualityScores(conversionMetrics, isoMonthlyTrends)
+      : [],
+    [conversionMetrics, isoMonthlyTrends, hasFundingData]
+  );
+  
+  const performanceAlerts = useMemo(() => 
+    hasFundingData && conversionMetrics.length > 0
+      ? generatePerformanceAlerts(conversionMetrics, qualityScores, isoMonthlyTrends)
+      : [],
+    [conversionMetrics, qualityScores, isoMonthlyTrends, hasFundingData]
+  );
 
   return (
     <div className="min-h-screen bg-background">
@@ -714,6 +747,41 @@ const Index = () => {
                         icon={Percent}
                       />
                     </div>
+                    
+                    {/* Performance Alerts */}
+                    {performanceAlerts.length > 0 && (
+                      <PerformanceAlerts alerts={performanceAlerts} />
+                    )}
+                    
+                    {/* Quality Score Grid */}
+                    {qualityScores.length > 0 && (
+                      <QualityScoreGrid 
+                        scores={qualityScores}
+                        selectedISO={selectedISO}
+                        onISOClick={handleISOClick}
+                      />
+                    )}
+                    
+                    {/* Rep Leaderboard */}
+                    {repPerformance.length > 0 && (
+                      <RepLeaderboard repPerformance={repPerformance} />
+                    )}
+                    
+                    {/* Conversion Trend Chart */}
+                    {isoMonthlyTrends.length > 0 && (
+                      <ConversionTrendChart 
+                        trends={isoMonthlyTrends}
+                        topISOs={topISOs}
+                      />
+                    )}
+                    
+                    {/* Rep Performance Table (with drill-down) */}
+                    <RepPerformanceTable
+                      metrics={conversionMetrics}
+                      repPerformance={repPerformance}
+                      selectedISO={selectedISO}
+                      onISOClick={handleISOClick}
+                    />
                     
                     {/* Conversion Table */}
                     <ConversionTable
