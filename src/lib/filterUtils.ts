@@ -4,6 +4,7 @@ import { startOfMonth, endOfMonth, startOfQuarter, endOfQuarter, startOfYear, su
 export interface DashboardFilters {
   datePreset: string;
   customDateRange?: { from: Date; to?: Date };
+  dealType: 'all' | 'new' | 'renewal'; // Simple deal type filter
   partners: string[];
   channelTypes: string[];
   lifecycleTypes: string[];
@@ -139,6 +140,18 @@ export function applyFilters(deals: Deal[], filters: DashboardFilters): Deal[] {
     filtered = filtered.filter(deal => {
       const dealDate = deal.fundingDate;
       return dealDate >= dateRange.from && dealDate <= dateRange.to;
+    });
+  }
+  
+  // Deal type filter (simple new/renewal)
+  if (filters.dealType !== 'all') {
+    filtered = filtered.filter(deal => {
+      const lifecycle = normalizeLifecycle(deal.dealType);
+      if (filters.dealType === 'new') {
+        return lifecycle.includes('New');
+      } else {
+        return lifecycle === 'Renewal';
+      }
     });
   }
   
