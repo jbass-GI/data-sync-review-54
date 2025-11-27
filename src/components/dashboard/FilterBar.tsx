@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Filter, X, ChevronDown } from 'lucide-react';
+import { Filter, X, ChevronDown, GitCompare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { 
@@ -36,6 +36,8 @@ interface FilterBarProps {
   availableMonths: string[];
   availableQuarters: string[];
   deals: Deal[];
+  onComparisonToggle?: () => void;
+  isComparisonActive?: boolean;
 }
 
 export function FilterBar({ 
@@ -44,7 +46,9 @@ export function FilterBar({
   availablePartners,
   availableMonths,
   availableQuarters,
-  deals
+  deals,
+  onComparisonToggle,
+  isComparisonActive = false
 }: FilterBarProps) {
   const [partnerSearch, setPartnerSearch] = useState('');
   
@@ -364,6 +368,19 @@ export function FilterBar({
           </Popover>
 
           <div className="flex-1" />
+
+          {/* Comparison Toggle */}
+          {onComparisonToggle && (
+            <Button 
+              variant={isComparisonActive ? "default" : "outline"} 
+              size="sm" 
+              onClick={onComparisonToggle}
+              className="gap-2"
+            >
+              <GitCompare className="h-4 w-4" />
+              {isComparisonActive ? 'Comparing' : 'Compare Periods'}
+            </Button>
+          )}
 
           {/* Reset/Clear Buttons */}
           <Button variant="ghost" size="sm" onClick={resetFilters}>

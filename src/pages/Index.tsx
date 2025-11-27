@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
-import { DollarSign, TrendingUp, FileText, Percent } from 'lucide-react';
+import { DollarSign, TrendingUp, FileText, Percent, TrendingDown } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { MetricCard } from '@/components/dashboard/MetricCard';
 import { ProgressBar } from '@/components/dashboard/ProgressBar';
@@ -9,6 +9,7 @@ import { FileUpload } from '@/components/dashboard/FileUpload';
 import { DataUploadOptions } from '@/components/dashboard/DataUploadOptions';
 import { FilterBar } from '@/components/dashboard/FilterBar';
 import { MiniHeader } from '@/components/dashboard/MiniHeader';
+import { ComparisonSelector } from '@/components/dashboard/ComparisonSelector';
 import { MTDTracking } from '@/components/dashboard/MTDTracking';
 import { TrendCharts } from '@/components/dashboard/TrendCharts';
 import { PartnerComparison } from '@/components/dashboard/PartnerComparison';
@@ -18,6 +19,7 @@ import { calculateDashboardMetrics, calculatePartnerMetrics, formatCurrency, for
 import { applyFilters, getFilterOptions, DashboardFilters, getDateRangeFromPreset, getFilterDisplayLabels } from '@/lib/filterUtils';
 import { calculateMTDMetrics } from '@/lib/mtdProjections';
 import { calculateWeeklyTrends, calculateMonthlyTrends } from '@/lib/trendAnalysis';
+import { comparePeriods, getComparisonPeriods, ComparisonType } from '@/lib/periodComparison';
 import { Deal, PartnerMetrics } from '@/types/dashboard';
 import glazerLogo from '@/assets/glazer-logo.png';
 
@@ -38,6 +40,8 @@ const Index = () => {
   const [partnerMerges, setPartnerMerges] = useState<Map<string, string[]>>(new Map());
   const [showMiniHeader, setShowMiniHeader] = useState(false);
   const [lastScrollY, setLastScrollY] = useState(0);
+  const [comparisonType, setComparisonType] = useState<ComparisonType>('none');
+  const isComparisonActive = comparisonType !== 'none';
 
   // Scroll detection for mini header
   useEffect(() => {
@@ -190,6 +194,25 @@ const Index = () => {
   const weeklyTrends = useMemo(() => calculateWeeklyTrends(filteredDeals), [filteredDeals]);
   const monthlyTrends = useMemo(() => calculateMonthlyTrends(filteredDeals), [filteredDeals]);
 
+  // Period comparison
+  const comparisonConfig = useMemo(() => 
+    getComparisonPeriods(comparisonType, new Date()),
+    [comparisonType]
+  );
+
+  const comparisonResult = useMemo(() => {
+    if (!comparisonConfig) return null;
+    return comparePeriods(deals, comparisonConfig);
+  }, [deals, comparisonConfig]);
+
+  const handleComparisonToggle = () => {
+    if (comparisonType === 'none') {
+      setComparisonType('ytd-vs-ytd');
+    } else {
+      setComparisonType('none');
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       {/* Mini Header */}
@@ -251,7 +274,22 @@ const Index = () => {
           availableMonths={filterOptions.months}
           availableQuarters={filterOptions.quarters}
           deals={deals}
+          onComparisonToggle={handleComparisonToggle}
+          isComparisonActive={isComparisonActive}
         />
+      )}
+
+      {/* Comparison Selector */}
+      {deals.length > 0 && comparisonConfig && (
+        <div className="container mx-auto px-6 pt-4">
+          <ComparisonSelector
+            comparisonType={comparisonType}
+            onComparisonTypeChange={setComparisonType}
+            currentLabel={comparisonConfig.currentPeriod.label}
+            comparisonLabel={comparisonConfig.comparisonPeriod.label}
+            isActive={isComparisonActive}
+          />
+        </div>
       )}
 
       <main className="container mx-auto px-6 py-8">
@@ -295,46 +333,68 @@ const Index = () => {
           </div>
         ) : (
           <div className="space-y-6">
-            {/* MTD Tracking & Projections */}
-            {mtdMetrics && (
+            {/* MTD Tracking & Projections - Hide in comparison mode */}
+            {mtdMetrics && !isComparisonActive && (
               <MTDTracking metrics={mtdMetrics} />
             )}
 
             {/* KPI Metrics */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               <MetricCard
-                title={displayLabels.fundedLabel}
+                title={isComparisonActive ? `${comparisonConfig?.currentPeriod.label} Funded` : displayLabels.fundedLabel}
                 value={formatCurrency(metrics!.totalFunded)}
                 icon={DollarSign}
-                trend="up"
-                trendValue={`${metrics!.dealCount} deals`}
+                trend={comparisonResult && comparisonResult.percentChanges.totalFunded >= 0 ? "up" : "down"}
+                trendValue={
+                  comparisonResult 
+                    ? `${comparisonResult.percentChanges.totalFunded >= 0 ? '+' : ''}${comparisonResult.percentChanges.totalFunded.toFixed(1)}% vs ${comparisonConfig?.comparisonPeriod.label}`
+                    : `${metrics!.dealCount} deals`
+                }
+                comparisonValue={comparisonResult ? formatCurrency(comparisonResult.comparison.totalFunded) : undefined}
               />
               <MetricCard
                 title="Management Fees"
                 value={formatCurrency(metrics!.totalFees)}
-                subValue={`Avg ${formatPercent(metrics!.avgFeePercent)}`}
+                subValue={isComparisonActive && comparisonResult 
+                  ? `${comparisonResult.percentChanges.totalFees >= 0 ? '+' : ''}${comparisonResult.percentChanges.totalFees.toFixed(1)}%`
+                  : `Avg ${formatPercent(metrics!.avgFeePercent)}`
+                }
                 icon={Percent}
+                trend={comparisonResult && comparisonResult.percentChanges.totalFees >= 0 ? "up" : "down"}
+                comparisonValue={comparisonResult ? formatCurrency(comparisonResult.comparison.totalFees) : undefined}
               />
               <MetricCard
                 title="Average Ticket Size"
                 value={formatCurrency(metrics!.avgTicketSize)}
                 icon={TrendingUp}
+                trend={comparisonResult && comparisonResult.percentChanges.avgTicketSize >= 0 ? "up" : "down"}
+                trendValue={comparisonResult 
+                  ? `${comparisonResult.percentChanges.avgTicketSize >= 0 ? '+' : ''}${comparisonResult.percentChanges.avgTicketSize.toFixed(1)}%`
+                  : undefined
+                }
+                comparisonValue={comparisonResult ? formatCurrency(comparisonResult.comparison.avgTicketSize) : undefined}
               />
               <MetricCard
                 title="Total Deals"
                 value={metrics!.dealCount.toString()}
-                subValue={displayLabels.dealsLabel}
-                icon={FileText}
+                subValue={isComparisonActive && comparisonResult
+                  ? `${comparisonResult.percentChanges.dealCount >= 0 ? '+' : ''}${comparisonResult.percentChanges.dealCount.toFixed(1)}%`
+                  : displayLabels.dealsLabel
+                }
+                icon={comparisonResult && comparisonResult.percentChanges.dealCount >= 0 ? FileText : TrendingDown}
+                comparisonValue={comparisonResult ? comparisonResult.comparison.dealCount.toString() : undefined}
               />
             </div>
 
-            {/* Progress Bar */}
-            <ProgressBar
-              title={displayLabels.targetLabel}
-              current={formatCurrency(metrics!.totalFunded)}
-              target={formatCurrency(metrics!.monthlyTarget)}
-              percentage={metrics!.targetProgress}
-            />
+            {/* Progress Bar - Hide in comparison mode */}
+            {!isComparisonActive && (
+              <ProgressBar
+                title={displayLabels.targetLabel}
+                current={formatCurrency(metrics!.totalFunded)}
+                target={formatCurrency(metrics!.monthlyTarget)}
+                percentage={metrics!.targetProgress}
+              />
+            )}
 
             {/* Deal Type Mix */}
             <DealTypeChart
