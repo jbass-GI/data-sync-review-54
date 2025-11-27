@@ -17,7 +17,7 @@ import { calculateDashboardMetrics, calculatePartnerMetrics, formatCurrency, for
 import { applyFilters, getFilterOptions, DashboardFilters, getDateRangeFromPreset, getFilterDisplayLabels } from '@/lib/filterUtils';
 import { calculateMTDMetrics } from '@/lib/mtdProjections';
 import { calculateWeeklyTrends, calculateMonthlyTrends } from '@/lib/trendAnalysis';
-import { Deal } from '@/types/dashboard';
+import { Deal, PartnerMetrics } from '@/types/dashboard';
 import glazerLogo from '@/assets/glazer-logo.png';
 
 const Index = () => {
@@ -34,6 +34,7 @@ const Index = () => {
     months: [],
     quarters: []
   });
+  const [partnerMerges, setPartnerMerges] = useState<Map<string, string[]>>(new Map());
 
   const handleFileUpload = async (file: File, mode: 'replace' | 'append' = 'replace') => {
     setIsLoading(true);
@@ -99,7 +100,67 @@ const Index = () => {
   }, [filters, deals]);
 
   const metrics = filteredDeals.length > 0 ? calculateDashboardMetrics(filteredDeals, dateRangeForMetrics) : null;
-  const partnerMetrics = filteredDeals.length > 0 ? calculatePartnerMetrics(filteredDeals) : [];
+  
+  // Calculate partner metrics and apply merges
+  const rawPartnerMetrics = filteredDeals.length > 0 ? calculatePartnerMetrics(filteredDeals) : [];
+  const partnerMetrics = useMemo(() => {
+    if (partnerMerges.size === 0) return rawPartnerMetrics;
+    
+    const mergedMetrics = new Map<string, PartnerMetrics>();
+    const processedPartners = new Set<string>();
+    
+    // Process each partner
+    rawPartnerMetrics.forEach(metric => {
+      if (processedPartners.has(metric.partner)) return;
+      
+      // Check if this partner is part of a merge
+      let mergeGroup: string[] | undefined;
+      let mergeKey: string | undefined;
+      
+      partnerMerges.forEach((partners, key) => {
+        if (partners.includes(metric.partner)) {
+          mergeGroup = partners;
+          mergeKey = key;
+        }
+      });
+      
+      if (mergeGroup && mergeKey) {
+        // Merge all partners in this group
+        const partnersToMerge = rawPartnerMetrics.filter(m => mergeGroup!.includes(m.partner));
+        
+        const merged: PartnerMetrics = {
+          partner: mergeKey,
+          channelType: partnersToMerge[0].channelType,
+          totalFunded: partnersToMerge.reduce((sum, p) => sum + p.totalFunded, 0),
+          totalFees: partnersToMerge.reduce((sum, p) => sum + p.totalFees, 0),
+          dealCount: partnersToMerge.reduce((sum, p) => sum + p.dealCount, 0),
+          avgTicketSize: 0,
+          avgFeePercent: 0,
+          newDealsCount: partnersToMerge.reduce((sum, p) => sum + p.newDealsCount, 0),
+          renewalDealsCount: partnersToMerge.reduce((sum, p) => sum + p.renewalDealsCount, 0),
+          consistencyScore: Math.round(partnersToMerge.reduce((sum, p) => sum + (p.consistencyScore || 0), 0) / partnersToMerge.length),
+          consecutiveBusinessDays: Math.max(...partnersToMerge.map(p => p.consecutiveBusinessDays || 0)),
+          consecutiveNewDeals: Math.max(...partnersToMerge.map(p => p.consecutiveNewDeals || 0)),
+          consecutiveRenewalDeals: Math.max(...partnersToMerge.map(p => p.consecutiveRenewalDeals || 0)),
+          daysWithMultipleDeals: partnersToMerge.reduce((sum, p) => sum + (p.daysWithMultipleDeals || 0), 0),
+          maxDealsInDay: Math.max(...partnersToMerge.map(p => p.maxDealsInDay || 0))
+        };
+        
+        // Recalculate averages
+        merged.avgTicketSize = merged.totalFunded / merged.dealCount;
+        merged.avgFeePercent = (merged.totalFees / merged.totalFunded) * 100;
+        
+        mergedMetrics.set(mergeKey, merged);
+        partnersToMerge.forEach(p => processedPartners.add(p.partner));
+      } else {
+        // No merge, keep as is
+        mergedMetrics.set(metric.partner, metric);
+        processedPartners.add(metric.partner);
+      }
+    });
+    
+    return Array.from(mergedMetrics.values()).sort((a, b) => b.totalFunded - a.totalFunded);
+  }, [rawPartnerMetrics, partnerMerges]);
   
   // Get display labels based on current filter
   const displayLabels = getFilterDisplayLabels(filters.datePreset);
@@ -179,16 +240,19 @@ const Index = () => {
                 Try adjusting your filters or clearing them to see more data
               </p>
               <button
-                onClick={() => setFilters({
-                  datePreset: 'mtd',
-                  dealType: 'all',
-                  partners: [],
-                  channelTypes: [],
-                  lifecycleTypes: [],
-                  ticketSizeBuckets: [],
-                  months: [],
-                  quarters: []
-                })}
+                onClick={() => {
+                  setFilters({
+                    datePreset: 'mtd',
+                    dealType: 'all',
+                    partners: [],
+                    channelTypes: [],
+                    lifecycleTypes: [],
+                    ticketSizeBuckets: [],
+                    months: [],
+                    quarters: []
+                  });
+                  setPartnerMerges(new Map());
+                }}
                 className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
               >
                 Reset Filters
@@ -256,7 +320,11 @@ const Index = () => {
             )}
 
             {/* Partner Table */}
-            <PartnerTable partners={partnerMetrics} />
+            <PartnerTable 
+              partners={partnerMetrics} 
+              partnerMerges={partnerMerges}
+              onPartnerMergesChange={setPartnerMerges}
+            />
 
             {/* Partner Comparison */}
             {partnerMetrics.length >= 2 && (

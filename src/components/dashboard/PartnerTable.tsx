@@ -9,20 +9,30 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Input } from '@/components/ui/input';
 import { PartnerMetrics } from '@/types/dashboard';
 import { formatCurrency, formatPercent } from '@/lib/dashboardMetrics';
-import { ArrowUpDown } from 'lucide-react';
+import { ArrowUpDown, Merge, X } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 interface PartnerTableProps {
   partners: PartnerMetrics[];
+  partnerMerges: Map<string, string[]>;
+  onPartnerMergesChange: (merges: Map<string, string[]>) => void;
 }
 
 type SortField = 'partner' | 'totalFunded' | 'totalFees' | 'dealCount' | 'avgFeePercent';
 type SortDirection = 'asc' | 'desc';
 
-export function PartnerTable({ partners }: PartnerTableProps) {
+export function PartnerTable({ partners, partnerMerges, onPartnerMergesChange }: PartnerTableProps) {
   const [sortField, setSortField] = useState<SortField>('totalFunded');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
+  const [mergeMode, setMergeMode] = useState(false);
+  const [selectedPartners, setSelectedPartners] = useState<Set<string>>(new Set());
+  const [mergedName, setMergedName] = useState('');
+  const { toast } = useToast();
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
@@ -48,6 +58,66 @@ export function PartnerTable({ partners }: PartnerTableProps) {
       : (bValue as number) - (aValue as number);
   });
 
+  const handleTogglePartnerSelection = (partner: string) => {
+    const newSelection = new Set(selectedPartners);
+    if (newSelection.has(partner)) {
+      newSelection.delete(partner);
+    } else {
+      newSelection.add(partner);
+    }
+    setSelectedPartners(newSelection);
+  };
+
+  const handleMergePartners = () => {
+    if (selectedPartners.size < 2) {
+      toast({
+        title: "Select partners to merge",
+        description: "Please select at least 2 partners to merge",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!mergedName.trim()) {
+      toast({
+        title: "Enter merged name",
+        description: "Please enter a name for the merged partner",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const newMerges = new Map(partnerMerges);
+    newMerges.set(mergedName.trim(), Array.from(selectedPartners));
+    onPartnerMergesChange(newMerges);
+    
+    setMergeMode(false);
+    setSelectedPartners(new Set());
+    setMergedName('');
+    
+    toast({
+      title: "Partners merged",
+      description: `${selectedPartners.size} partners merged as "${mergedName.trim()}"`,
+    });
+  };
+
+  const handleUnmerge = (mergedName: string) => {
+    const newMerges = new Map(partnerMerges);
+    newMerges.delete(mergedName);
+    onPartnerMergesChange(newMerges);
+    
+    toast({
+      title: "Partners unmerged",
+      description: `"${mergedName}" has been split back into separate partners`,
+    });
+  };
+
+  const handleCancelMerge = () => {
+    setMergeMode(false);
+    setSelectedPartners(new Set());
+    setMergedName('');
+  };
+
   const getChannelColor = (channel: string) => {
     switch (channel) {
       case 'Direct':
@@ -59,14 +129,78 @@ export function PartnerTable({ partners }: PartnerTableProps) {
     }
   };
 
+  const isMergedPartner = (partner: string) => {
+    return partnerMerges.has(partner);
+  };
+
   return (
     <Card className="p-6 border-border/50 bg-card/50 backdrop-blur">
-      <h2 className="text-xl font-bold mb-4">Partner Performance</h2>
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-xl font-bold">Partner Performance</h2>
+        <div className="flex items-center gap-2">
+          {partnerMerges.size > 0 && !mergeMode && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                onPartnerMergesChange(new Map());
+                toast({
+                  title: "All merges cleared",
+                  description: "Partners have been unmerged",
+                });
+              }}
+            >
+              <X className="w-4 h-4 mr-1" />
+              Clear All Merges ({partnerMerges.size})
+            </Button>
+          )}
+          {!mergeMode ? (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setMergeMode(true)}
+            >
+              <Merge className="w-4 h-4 mr-1" />
+              Merge Partners
+            </Button>
+          ) : (
+            <div className="flex items-center gap-2">
+              <Input
+                placeholder="Merged partner name..."
+                value={mergedName}
+                onChange={(e) => setMergedName(e.target.value)}
+                className="w-48"
+              />
+              <Button
+                size="sm"
+                onClick={handleMergePartners}
+                disabled={selectedPartners.size < 2}
+              >
+                Merge ({selectedPartners.size})
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleCancelMerge}
+              >
+                Cancel
+              </Button>
+            </div>
+          )}
+        </div>
+      </div>
       
       <div className="overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow className="border-border/50">
+              {mergeMode && (
+                <TableHead className="w-12">
+                  <div className="flex items-center justify-center">
+                    Select
+                  </div>
+                </TableHead>
+              )}
               <TableHead 
                 className="cursor-pointer hover:text-foreground"
                 onClick={() => handleSort('partner')}
@@ -119,7 +253,37 @@ export function PartnerTable({ partners }: PartnerTableProps) {
           <TableBody>
             {sortedPartners.map((partner) => (
               <TableRow key={partner.partner} className="border-border/30">
-                <TableCell className="font-medium">{partner.partner}</TableCell>
+                {mergeMode && (
+                  <TableCell>
+                    <div className="flex items-center justify-center">
+                      <Checkbox
+                        checked={selectedPartners.has(partner.partner)}
+                        onCheckedChange={() => handleTogglePartnerSelection(partner.partner)}
+                      />
+                    </div>
+                  </TableCell>
+                )}
+                <TableCell className="font-medium">
+                  <div className="flex items-center gap-2">
+                    {partner.partner}
+                    {isMergedPartner(partner.partner) && (
+                      <div className="flex items-center gap-1">
+                        <Badge variant="secondary" className="text-xs">
+                          <Merge className="w-3 h-3 mr-1" />
+                          Merged ({partnerMerges.get(partner.partner)?.length})
+                        </Badge>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-5 w-5 p-0"
+                          onClick={() => handleUnmerge(partner.partner)}
+                        >
+                          <X className="w-3 h-3" />
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                </TableCell>
                 <TableCell>
                   <Badge variant="outline" className={getChannelColor(partner.channelType)}>
                     {partner.channelType}
