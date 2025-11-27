@@ -7,10 +7,12 @@ import { DealTypeChart } from '@/components/dashboard/DealTypeChart';
 import { FileUpload } from '@/components/dashboard/FileUpload';
 import { FilterBar } from '@/components/dashboard/FilterBar';
 import { MTDTracking } from '@/components/dashboard/MTDTracking';
+import { TrendCharts } from '@/components/dashboard/TrendCharts';
 import { parseExcelFile } from '@/lib/parseExcel';
 import { calculateDashboardMetrics, calculatePartnerMetrics, formatCurrency, formatPercent } from '@/lib/dashboardMetrics';
 import { applyFilters, getFilterOptions, DashboardFilters, getDateRangeFromPreset } from '@/lib/filterUtils';
 import { calculateMTDMetrics } from '@/lib/mtdProjections';
+import { calculateWeeklyTrends, calculateMonthlyTrends } from '@/lib/trendAnalysis';
 import { Deal } from '@/types/dashboard';
 
 const Index = () => {
@@ -71,6 +73,10 @@ const Index = () => {
   const mtdMetrics = deals.length > 0 && (filters.datePreset === 'mtd' || filters.datePreset === 'all')
     ? calculateMTDMetrics(deals)
     : null;
+
+  // Calculate trend data for charts
+  const weeklyTrends = useMemo(() => calculateWeeklyTrends(filteredDeals), [filteredDeals]);
+  const monthlyTrends = useMemo(() => calculateMonthlyTrends(filteredDeals), [filteredDeals]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -164,6 +170,14 @@ const Index = () => {
               newDealsFunded={metrics!.newDealsFunded}
               renewalDealsFunded={metrics!.renewalDealsFunded}
             />
+
+            {/* Trend Charts */}
+            {(weeklyTrends.length > 0 || monthlyTrends.length > 0) && (
+              <TrendCharts
+                weeklyTrends={weeklyTrends}
+                monthlyTrends={monthlyTrends}
+              />
+            )}
 
             {/* Partner Table */}
             <PartnerTable partners={partnerMetrics} />
