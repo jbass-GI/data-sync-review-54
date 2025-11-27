@@ -9,17 +9,9 @@ export function calculateDashboardMetrics(deals: Deal[], dateRange?: { from: Dat
   const avgTicketSize = dealCount > 0 ? totalFunded / dealCount : 0;
   const avgFeePercent = totalFunded > 0 ? (totalFees / totalFunded) * 100 : 0;
   
-  // Calculate prorated target based on date range
+  // Fixed monthly target - always $30M regardless of date range
   const annualTarget = 360000000; // $360M annual target
-  const baseMonthlyTarget = annualTarget / 12; // $30M monthly target
-  const dailyTarget = annualTarget / 365; // Daily target from annual
-  
-  let monthlyTarget = baseMonthlyTarget;
-  if (dateRange?.from) {
-    const endDate = dateRange.to || new Date();
-    const daysInRange = differenceInDays(endDate, dateRange.from) + 1; // +1 to include both start and end dates
-    monthlyTarget = dailyTarget * daysInRange;
-  }
+  const monthlyTarget = annualTarget / 12; // Fixed $30M monthly target
   
   const targetProgress = monthlyTarget > 0 ? (totalFunded / monthlyTarget) * 100 : 0;
   
