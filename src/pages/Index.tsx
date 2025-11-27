@@ -170,18 +170,22 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="border-b border-border/50 bg-card/30 backdrop-blur">
-        <div className="container mx-auto px-6 py-6">
+      <header className="border-b border-border/50 bg-gradient-to-r from-card via-card to-card/80 backdrop-blur relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5 pointer-events-none" />
+        <div className="container mx-auto px-6 py-8 relative z-10">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-6">
               <img 
                 src={glazerLogo} 
                 alt="Glazer Investments" 
-                className="h-12 w-auto"
+                className="h-20 w-auto logo-glow transition-all duration-300 hover:scale-105"
               />
-              <div className="border-l border-border/50 pl-4">
-                <p className="text-sm font-medium text-muted-foreground">
+              <div className="border-l-2 border-gradient pl-6">
+                <h1 className="text-2xl font-bold text-gradient mb-1">
                   MCA Production Dashboard
+                </h1>
+                <p className="text-sm text-muted-foreground">
+                  Real-time Performance Analytics
                 </p>
               </div>
             </div>
@@ -194,10 +198,11 @@ const Index = () => {
                   filters={filters}
                 />
               )}
-              <div className="text-right">
-                <p className="text-sm text-muted-foreground">January 2025</p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Updated in real-time
+              <div className="text-right border-l border-border/50 pl-4">
+                <p className="text-sm font-medium text-foreground">January 2025</p>
+                <p className="text-xs text-accent mt-1 flex items-center justify-end gap-1">
+                  <span className="inline-block w-2 h-2 rounded-full bg-success animate-pulse" />
+                  Live Updates
                 </p>
               </div>
             </div>

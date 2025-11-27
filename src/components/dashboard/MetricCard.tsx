@@ -13,13 +13,13 @@ interface MetricCardProps {
 
 export function MetricCard({ title, value, subValue, icon: Icon, trend, trendValue }: MetricCardProps) {
   return (
-    <Card className="metric-card p-6 border-border/50 bg-card/50 backdrop-blur">
+    <Card className="metric-card p-6 border-border/50 bg-card/50 backdrop-blur hover:card-glow transition-all duration-300 group">
       <div className="flex items-start justify-between">
         <div className="flex-1">
-          <p className="text-sm text-muted-foreground mb-2">{title}</p>
-          <h3 className="text-3xl font-bold text-foreground mb-1">{value}</h3>
+          <p className="text-sm text-muted-foreground mb-2 font-medium">{title}</p>
+          <h3 className="text-3xl font-bold stat-highlight bg-gradient-to-br from-foreground to-foreground/80 bg-clip-text">{value}</h3>
           {subValue && (
-            <p className="text-sm text-muted-foreground">{subValue}</p>
+            <p className="text-sm text-accent/80 mt-1 font-medium">{subValue}</p>
           )}
           {trend && trendValue && (
             <div className="flex items-center gap-1 mt-2">
@@ -34,8 +34,8 @@ export function MetricCard({ title, value, subValue, icon: Icon, trend, trendVal
             </div>
           )}
         </div>
-        <div className="p-3 bg-primary/10 rounded-lg">
-          <Icon className="w-6 h-6 text-primary" />
+        <div className="p-3 bg-gradient-to-br from-primary/20 to-accent/10 rounded-lg border border-primary/20 group-hover:border-primary/40 transition-all duration-300">
+          <Icon className="w-6 h-6 text-primary group-hover:scale-110 transition-transform duration-300" />
         </div>
       </div>
     </Card>
