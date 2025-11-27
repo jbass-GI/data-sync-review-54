@@ -12,7 +12,7 @@ export interface Deal {
 
 export interface PartnerMetrics {
   partner: string;
-  channelType: 'Direct' | 'Platform' | 'ISO';
+  channelType: 'Direct' | 'ISO';
   totalFunded: number;
   totalFees: number;
   dealCount: number;

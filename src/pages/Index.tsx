@@ -6,9 +6,11 @@ import { PartnerTable } from '@/components/dashboard/PartnerTable';
 import { DealTypeChart } from '@/components/dashboard/DealTypeChart';
 import { FileUpload } from '@/components/dashboard/FileUpload';
 import { FilterBar } from '@/components/dashboard/FilterBar';
+import { MTDTracking } from '@/components/dashboard/MTDTracking';
 import { parseExcelFile } from '@/lib/parseExcel';
 import { calculateDashboardMetrics, calculatePartnerMetrics, formatCurrency, formatPercent } from '@/lib/dashboardMetrics';
 import { applyFilters, getFilterOptions, DashboardFilters, getDateRangeFromPreset } from '@/lib/filterUtils';
+import { calculateMTDMetrics } from '@/lib/mtdProjections';
 import { Deal } from '@/types/dashboard';
 
 const Index = () => {
@@ -64,6 +66,11 @@ const Index = () => {
 
   const metrics = filteredDeals.length > 0 ? calculateDashboardMetrics(filteredDeals, dateRangeForMetrics) : null;
   const partnerMetrics = filteredDeals.length > 0 ? calculatePartnerMetrics(filteredDeals) : [];
+  
+  // Calculate MTD projections (only when viewing MTD or all data)
+  const mtdMetrics = deals.length > 0 && (filters.datePreset === 'mtd' || filters.datePreset === 'all')
+    ? calculateMTDMetrics(deals)
+    : null;
 
   return (
     <div className="min-h-screen bg-background">
@@ -111,6 +118,11 @@ const Index = () => {
           </div>
         ) : (
           <div className="space-y-6">
+            {/* MTD Tracking & Projections */}
+            {mtdMetrics && (
+              <MTDTracking metrics={mtdMetrics} />
+            )}
+
             {/* KPI Metrics */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               <MetricCard

@@ -25,7 +25,7 @@ export const DATE_PRESETS = [
   { value: 'custom', label: 'Custom Range' }
 ];
 
-export const CHANNEL_TYPES = ['Direct', 'ISO', 'Platform'];
+export const CHANNEL_TYPES = ['Direct', 'ISO'];
 
 export const LIFECYCLE_TYPES = ['New', 'Renewal', 'New - Add On', 'New - PIF', 'Other'];
 
@@ -152,8 +152,7 @@ export function applyFilters(deals: Deal[], filters: DashboardFilters): Deal[] {
   // Channel type filter
   if (filters.channelTypes.length > 0) {
     filtered = filtered.filter(deal => {
-      const channelType = deal.partnerNormalized === 'DIRECT' ? 'Direct' :
-                         deal.partnerNormalized === 'PLATFORM' ? 'Platform' : 'ISO';
+      const channelType = deal.partnerNormalized === 'DIRECT' ? 'Direct' : 'ISO';
       return filters.channelTypes.includes(channelType);
     });
   }
