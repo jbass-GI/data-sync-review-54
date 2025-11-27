@@ -327,7 +327,10 @@ const Index = () => {
 
             {/* Partner Comparison */}
             {partnerMetrics.length >= 2 && (
-              <PartnerComparison partners={partnerMetrics} />
+              <PartnerComparison 
+                partners={partnerMetrics}
+                partnerMerges={partnerMerges}
+              />
             )}
 
             {/* Upload Options */}

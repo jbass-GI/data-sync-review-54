@@ -11,15 +11,22 @@ export function calculateDashboardMetrics(deals: Deal[], dateRange?: { from: Dat
   const avgFeePercent = totalFunded > 0 ? (totalFees / totalFunded) * 100 : 0;
   
   // Calculate appropriate target based on date range
-  const annualTarget = 300000000; // $300M annual target
-  const monthlyTarget = annualTarget / 12; // $25M monthly target
+  const annualTarget = 360000000; // $360M annual target
+  const monthlyTarget = 30000000; // Fixed $30M monthly target
   
   let targetAmount = monthlyTarget;
   if (dateRange?.from && dateRange?.to) {
     // Calculate number of days in range
     const daysInRange = differenceInDays(dateRange.to, dateRange.from) + 1;
     const monthsInRange = daysInRange / 30; // Approximate months
-    targetAmount = monthlyTarget * monthsInRange;
+    
+    // For MTD (less than full month), always use full monthly target
+    if (monthsInRange < 1) {
+      targetAmount = monthlyTarget;
+    } else {
+      // For longer periods, calculate proportional target
+      targetAmount = monthlyTarget * monthsInRange;
+    }
   }
   
   const targetProgress = targetAmount > 0 ? (totalFunded / targetAmount) * 100 : 0;
