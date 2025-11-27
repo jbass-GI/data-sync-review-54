@@ -1,5 +1,113 @@
 import { Deal } from '@/types/dashboard';
-import { startOfMonth, endOfMonth, differenceInDays, differenceInBusinessDays } from 'date-fns';
+import { startOfMonth, endOfMonth, differenceInDays, eachDayOfInterval, isWeekend } from 'date-fns';
+
+/**
+ * US Bank Holidays (days when wire transfers cannot be sent)
+ * These are the Federal Reserve holidays
+ */
+function getUSBankHolidays(year: number): Date[] {
+  const holidays: Date[] = [];
+  
+  // New Year's Day (January 1)
+  holidays.push(new Date(year, 0, 1));
+  
+  // Martin Luther King Jr. Day (3rd Monday in January)
+  const mlkDay = getNthWeekdayOfMonth(year, 0, 1, 3);
+  holidays.push(mlkDay);
+  
+  // Presidents' Day (3rd Monday in February)
+  const presidentsDay = getNthWeekdayOfMonth(year, 1, 1, 3);
+  holidays.push(presidentsDay);
+  
+  // Memorial Day (Last Monday in May)
+  const memorialDay = getLastWeekdayOfMonth(year, 4, 1);
+  holidays.push(memorialDay);
+  
+  // Juneteenth (June 19)
+  holidays.push(new Date(year, 5, 19));
+  
+  // Independence Day (July 4)
+  holidays.push(new Date(year, 6, 4));
+  
+  // Labor Day (1st Monday in September)
+  const laborDay = getNthWeekdayOfMonth(year, 8, 1, 1);
+  holidays.push(laborDay);
+  
+  // Columbus Day (2nd Monday in October)
+  const columbusDay = getNthWeekdayOfMonth(year, 9, 1, 2);
+  holidays.push(columbusDay);
+  
+  // Veterans Day (November 11)
+  holidays.push(new Date(year, 10, 11));
+  
+  // Thanksgiving Day (4th Thursday in November)
+  const thanksgiving = getNthWeekdayOfMonth(year, 10, 4, 4);
+  holidays.push(thanksgiving);
+  
+  // Christmas Day (December 25)
+  holidays.push(new Date(year, 11, 25));
+  
+  // If holiday falls on Saturday, observed on Friday
+  // If holiday falls on Sunday, observed on Monday
+  return holidays.map(holiday => {
+    const day = holiday.getDay();
+    if (day === 0) { // Sunday
+      return new Date(holiday.getFullYear(), holiday.getMonth(), holiday.getDate() + 1);
+    } else if (day === 6) { // Saturday
+      return new Date(holiday.getFullYear(), holiday.getMonth(), holiday.getDate() - 1);
+    }
+    return holiday;
+  });
+}
+
+/**
+ * Get the nth occurrence of a weekday in a month
+ */
+function getNthWeekdayOfMonth(year: number, month: number, weekday: number, n: number): Date {
+  const firstDay = new Date(year, month, 1);
+  const firstWeekday = firstDay.getDay();
+  const offset = (weekday - firstWeekday + 7) % 7;
+  const date = 1 + offset + (n - 1) * 7;
+  return new Date(year, month, date);
+}
+
+/**
+ * Get the last occurrence of a weekday in a month
+ */
+function getLastWeekdayOfMonth(year: number, month: number, weekday: number): Date {
+  const lastDay = new Date(year, month + 1, 0);
+  const lastWeekday = lastDay.getDay();
+  const offset = (lastWeekday - weekday + 7) % 7;
+  const date = lastDay.getDate() - offset;
+  return new Date(year, month, date);
+}
+
+/**
+ * Check if a date is a US bank holiday
+ */
+function isUSBankHoliday(date: Date, holidays: Date[]): boolean {
+  const dateStr = date.toISOString().split('T')[0];
+  return holidays.some(holiday => holiday.toISOString().split('T')[0] === dateStr);
+}
+
+/**
+ * Calculate business days between two dates (excluding weekends and US bank holidays)
+ */
+function calculateBusinessDays(startDate: Date, endDate: Date): number {
+  const holidays = getUSBankHolidays(startDate.getFullYear());
+  const nextYearHolidays = startDate.getFullYear() !== endDate.getFullYear()
+    ? getUSBankHolidays(endDate.getFullYear())
+    : [];
+  const allHolidays = [...holidays, ...nextYearHolidays];
+  
+  const days = eachDayOfInterval({ start: startDate, end: endDate });
+  
+  return days.filter(day => {
+    if (isWeekend(day)) return false;
+    if (isUSBankHoliday(day, allHolidays)) return false;
+    return true;
+  }).length;
+}
 
 export interface MTDMetrics {
   // Current performance
@@ -66,18 +174,21 @@ export function calculateMTDMetrics(deals: Deal[], annualTarget: number = 360000
   const totalDaysInMonth = differenceInDays(lastDayOfMonth, firstDayOfMonth) + 1;
   const monthProgress = (daysElapsed / totalDaysInMonth) * 100;
   
-  // Business days (Mon-Fri)
-  const businessDaysElapsed = differenceInBusinessDays(today, firstDayOfMonth) + 1;
-  const businessDaysRemaining = differenceInBusinessDays(lastDayOfMonth, today);
+  // Business days (Mon-Fri, excluding US bank holidays)
+  const businessDaysElapsed = calculateBusinessDays(firstDayOfMonth, today);
+  const businessDaysRemaining = calculateBusinessDays(today, lastDayOfMonth);
+  const totalBusinessDaysInMonth = calculateBusinessDays(firstDayOfMonth, lastDayOfMonth);
   
-  // Burn rate calculations
-  const dailyBurnRate = daysElapsed > 0 ? mtdFunded / daysElapsed : 0;
+  // Burn rate calculations (based on business days)
+  const dailyBurnRate = businessDaysElapsed > 0 ? mtdFunded / businessDaysElapsed : 0;
   const businessDailyBurnRate = businessDaysElapsed > 0 ? mtdFunded / businessDaysElapsed : 0;
-  const targetDailyBurnRate = monthlyTarget / totalDaysInMonth;
+  const targetDailyBurnRate = totalBusinessDaysInMonth > 0 ? monthlyTarget / totalBusinessDaysInMonth : 0;
   
   // Determine burn rate status
   let burnRateStatus: 'Ahead' | 'On Track' | 'Behind';
-  const burnRateDiff = ((dailyBurnRate - targetDailyBurnRate) / targetDailyBurnRate) * 100;
+  const burnRateDiff = targetDailyBurnRate > 0 
+    ? ((dailyBurnRate - targetDailyBurnRate) / targetDailyBurnRate) * 100 
+    : 0;
   if (burnRateDiff > 10) {
     burnRateStatus = 'Ahead';
   } else if (burnRateDiff < -10) {
@@ -86,26 +197,26 @@ export function calculateMTDMetrics(deals: Deal[], annualTarget: number = 360000
     burnRateStatus = 'On Track';
   }
   
-  // Projection calculations
-  const projectedMonthEnd = daysElapsed >= 3 
-    ? dailyBurnRate * totalDaysInMonth // Project based on current pace
+  // Projection calculations (based on business days)
+  const projectedMonthEnd = businessDaysElapsed >= 3 
+    ? dailyBurnRate * totalBusinessDaysInMonth // Project based on current pace
     : monthlyTarget * (monthProgress / 100); // Early month: use linear projection
   
   const projectedVsTarget = projectedMonthEnd - monthlyTarget;
   
   // Projection confidence (more data = higher confidence)
   let projectionConfidence: 'High' | 'Medium' | 'Low';
-  if (daysElapsed >= 15) {
+  if (businessDaysElapsed >= 10) {
     projectionConfidence = 'High';
-  } else if (daysElapsed >= 7) {
+  } else if (businessDaysElapsed >= 5) {
     projectionConfidence = 'Medium';
   } else {
     projectionConfidence = 'Low';
   }
   
-  // Required pace to hit target
-  const requiredDailyPace = daysRemaining > 0 
-    ? remainingToTarget / daysRemaining 
+  // Required pace to hit target (based on business days)
+  const requiredDailyPace = businessDaysRemaining > 0 
+    ? remainingToTarget / businessDaysRemaining 
     : 0;
   
   const currentPaceVsRequired = requiredDailyPace > 0 
