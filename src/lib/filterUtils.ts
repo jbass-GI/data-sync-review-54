@@ -43,11 +43,32 @@ export function getAvailableYears(deals: Deal[]): number[] {
 }
 
 /**
+ * Check if there are deals in a specific date range
+ */
+export function hasDealsinPeriod(deals: Deal[], preset: string): boolean {
+  if (deals.length === 0) return false;
+  
+  const dateRange = getDateRangeFromPreset(preset, deals);
+  const dealsInPeriod = deals.filter(deal => {
+    const dealDate = deal.fundingDate;
+    return dealDate >= dateRange.from && dealDate <= dateRange.to;
+  });
+  
+  return dealsInPeriod.length > 0;
+}
+
+/**
  * Get date presets dynamically based on available data
  */
 export function getDatePresets(deals: Deal[]): typeof DATE_PRESETS {
   const basePresets = [...DATE_PRESETS];
   const years = getAvailableYears(deals);
+  
+  // Filter out MTD if no data exists in current month-to-date period
+  const hasMTDData = hasDealsinPeriod(deals, 'mtd');
+  const filteredPresets = hasMTDData 
+    ? basePresets 
+    : basePresets.filter(p => p.value !== 'mtd');
   
   // If data spans multiple years, add year options
   if (years.length > 1) {
@@ -57,11 +78,11 @@ export function getDatePresets(deals: Deal[]): typeof DATE_PRESETS {
     }));
     
     // Insert year presets before "custom"
-    const customIndex = basePresets.findIndex(p => p.value === 'custom');
-    basePresets.splice(customIndex, 0, ...yearPresets);
+    const customIndex = filteredPresets.findIndex(p => p.value === 'custom');
+    filteredPresets.splice(customIndex, 0, ...yearPresets);
   }
   
-  return basePresets;
+  return filteredPresets;
 }
 
 /**

@@ -27,8 +27,17 @@ const Index = () => {
   const [deals, setDeals] = useState<Deal[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  
+  // Check if there's MTD data
+  const hasMTDData = useMemo(() => {
+    if (deals.length === 0) return false;
+    const now = new Date();
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    return deals.some(deal => deal.fundingDate >= monthStart && deal.fundingDate <= now);
+  }, [deals]);
+  
   const [filters, setFilters] = useState<DashboardFilters>({
-    datePreset: 'mtd', // Default to Month-to-Date
+    datePreset: 'mtd', // Will be updated when deals load if no MTD data
     dealType: 'all',
     partners: [],
     channelTypes: [],
@@ -91,9 +100,15 @@ const Index = () => {
       } else {
         // Replace all data
         setDeals(parsedDeals);
-        // Reset filters to MTD when new data is uploaded
+        
+        // Check if new data has MTD deals
+        const now = new Date();
+        const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+        const hasMTD = parsedDeals.some(deal => deal.fundingDate >= monthStart && deal.fundingDate <= now);
+        
+        // Reset filters - use MTD if available, otherwise all time
         setFilters({
-          datePreset: 'mtd',
+          datePreset: hasMTD ? 'mtd' : 'all',
           dealType: 'all',
           partners: [],
           channelTypes: [],
@@ -221,6 +236,7 @@ const Index = () => {
           filters={filters}
           onFiltersChange={setFilters}
           isVisible={showMiniHeader}
+          hasMTDData={hasMTDData}
         />
       )}
 
@@ -276,6 +292,7 @@ const Index = () => {
           deals={deals}
           onComparisonToggle={handleComparisonToggle}
           isComparisonActive={isComparisonActive}
+          hasMTDData={hasMTDData}
         />
       )}
 
@@ -310,8 +327,13 @@ const Index = () => {
               </p>
               <button
                 onClick={() => {
+                  const hasMTD = deals.some(deal => {
+                    const now = new Date();
+                    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+                    return deal.fundingDate >= monthStart && deal.fundingDate <= now;
+                  });
                   setFilters({
-                    datePreset: 'mtd',
+                    datePreset: hasMTD ? 'mtd' : 'all',
                     dealType: 'all',
                     partners: [],
                     channelTypes: [],
