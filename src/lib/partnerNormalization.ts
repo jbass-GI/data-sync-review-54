@@ -166,9 +166,9 @@ export function normalizePartner(rawPartnerText: string): string {
 
 /**
  * Get channel type based on normalized partner name
+ * Note: Platform is treated as ISO per business requirements
  */
-export function getChannelTypeFromNormalized(normalizedPartner: string): 'Direct' | 'Platform' | 'ISO' {
+export function getChannelTypeFromNormalized(normalizedPartner: string): 'Direct' | 'ISO' {
   if (normalizedPartner === 'DIRECT') return 'Direct';
-  if (normalizedPartner === 'PLATFORM') return 'Platform';
-  return 'ISO';
+  return 'ISO'; // Platform and all other partners are ISOs
 }

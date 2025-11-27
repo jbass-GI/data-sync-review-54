@@ -84,7 +84,7 @@ export function parseExcelFile(file: File): Promise<Deal[]> {
 
 // Legacy function - kept for backwards compatibility
 // Use getChannelTypeFromNormalized from partnerNormalization.ts instead
-export function getChannelType(partner: string): 'Direct' | 'Platform' | 'ISO' {
+export function getChannelType(partner: string): 'Direct' | 'ISO' {
   const normalized = normalizePartner(partner);
   return getChannelTypeFromNormalized(normalized);
 }
