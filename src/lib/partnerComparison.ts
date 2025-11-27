@@ -193,26 +193,36 @@ export function getPartnerRadarData(partner: PartnerMetrics, allPartners: Partne
     {
       metric: 'Volume',
       value: maxFunded > 0 ? (partner.totalFunded / maxFunded) * 100 : 0,
+      actualValue: partner.totalFunded,
+      displayValue: formatCurrency(partner.totalFunded),
       fullMark: 100
     },
     {
       metric: 'Fees',
       value: maxFees > 0 ? (partner.totalFees / maxFees) * 100 : 0,
+      actualValue: partner.totalFees,
+      displayValue: formatCurrency(partner.totalFees),
       fullMark: 100
     },
     {
       metric: 'Deal Count',
       value: maxDeals > 0 ? (partner.dealCount / maxDeals) * 100 : 0,
+      actualValue: partner.dealCount,
+      displayValue: `${partner.dealCount} deals`,
       fullMark: 100
     },
     {
       metric: 'Avg Ticket',
       value: maxAvgTicket > 0 ? (partner.avgTicketSize / maxAvgTicket) * 100 : 0,
+      actualValue: partner.avgTicketSize,
+      displayValue: formatCurrency(partner.avgTicketSize),
       fullMark: 100
     },
     {
       metric: 'Fee %',
       value: maxFeePercent > 0 ? (partner.avgFeePercent / maxFeePercent) * 100 : 0,
+      actualValue: partner.avgFeePercent,
+      displayValue: `${partner.avgFeePercent.toFixed(2)}%`,
       fullMark: 100
     }
   ];

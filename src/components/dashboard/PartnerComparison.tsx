@@ -61,7 +61,7 @@ export function PartnerComparison({ partners }: PartnerComparisonProps) {
     return winner === side ? 'text-success font-bold' : 'text-muted-foreground';
   };
 
-  // Prepare radar chart data
+  // Prepare radar chart data with actual values for tooltip
   const radarData = partner1Data && partner2Data && partners.length > 0
     ? getPartnerRadarData(partner1Data, partners).map((p1Data, index) => {
         const p2Data = getPartnerRadarData(partner2Data, partners)[index];
@@ -69,10 +69,32 @@ export function PartnerComparison({ partners }: PartnerComparisonProps) {
           metric: p1Data.metric,
           [selectedPartner1]: p1Data.value,
           [selectedPartner2]: p2Data.value,
+          [`${selectedPartner1}_actual`]: p1Data.displayValue,
+          [`${selectedPartner2}_actual`]: p2Data.displayValue,
           fullMark: 100
         };
       })
     : [];
+
+  // Custom tooltip for radar chart
+  const CustomRadarTooltip = ({ active, payload }: any) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="bg-popover border border-border rounded-lg shadow-lg p-3">
+          <p className="font-semibold text-sm mb-2">{payload[0].payload.metric}</p>
+          {payload.map((entry: any, index: number) => (
+            <div key={index} className="flex items-center justify-between gap-4 text-xs">
+              <span style={{ color: entry.color }}>{entry.name}:</span>
+              <span className="font-semibold">
+                {entry.payload[`${entry.name}_actual`]}
+              </span>
+            </div>
+          ))}
+        </div>
+      );
+    }
+    return null;
+  };
 
   return (
     <div className="space-y-6">
@@ -211,7 +233,7 @@ export function PartnerComparison({ partners }: PartnerComparisonProps) {
                       strokeWidth={2}
                     />
                     <Legend />
-                    <Tooltip />
+                    <Tooltip content={<CustomRadarTooltip />} />
                   </RadarChart>
                 </ResponsiveContainer>
               </div>
