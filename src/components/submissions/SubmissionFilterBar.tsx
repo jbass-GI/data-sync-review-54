@@ -1,9 +1,11 @@
+import { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
-import { X } from 'lucide-react';
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerFooter, DrawerTrigger } from '@/components/ui/drawer';
+import { X, Filter } from 'lucide-react';
 import {
   SubmissionFilters,
   SUBMISSION_DATE_PRESETS,
@@ -25,6 +27,7 @@ export function SubmissionFilterBar({
   availableISOs,
   availableReps
 }: SubmissionFilterBarProps) {
+  const [mobileOpen, setMobileOpen] = useState(false);
   const handleDatePresetChange = (value: string) => {
     onFiltersChange({ ...filters, datePreset: value });
   };
@@ -76,9 +79,8 @@ export function SubmissionFilterBar({
     filters.pipelineAgeBuckets.length > 0 ||
     filters.reps.length > 0;
 
-  return (
-    <Card className="p-4">
-      <div className="space-y-6">
+  const FilterPanel = () => (
+    <div className="space-y-6">
         <div className="flex items-center justify-between">
           <h3 className="font-semibold">Filters</h3>
           {hasActiveFilters && (
@@ -184,6 +186,47 @@ export function SubmissionFilterBar({
           </div>
         </div>
       </div>
-    </Card>
+  );
+  
+  return (
+    <>
+      {/* Desktop: Fixed sidebar */}
+      <div className="hidden lg:block">
+        <Card className="p-4">
+          <FilterPanel />
+        </Card>
+      </div>
+      
+      {/* Mobile: Floating button + drawer */}
+      <div className="lg:hidden">
+        <Drawer open={mobileOpen} onOpenChange={setMobileOpen}>
+          <DrawerTrigger asChild>
+            <Button 
+              className="fixed bottom-4 right-4 z-50 shadow-lg"
+              size="lg"
+            >
+              <Filter className="w-4 h-4 mr-2" />
+              Filters
+              {hasActiveFilters && (
+                <span className="ml-2 bg-primary-foreground text-primary rounded-full w-5 h-5 text-xs flex items-center justify-center">
+                  !
+                </span>
+              )}
+            </Button>
+          </DrawerTrigger>
+          <DrawerContent>
+            <DrawerHeader>
+              <DrawerTitle>Filter Submissions</DrawerTitle>
+            </DrawerHeader>
+            <div className="p-4 overflow-y-auto max-h-[70vh]">
+              <FilterPanel />
+            </div>
+            <DrawerFooter>
+              <Button onClick={() => setMobileOpen(false)}>Apply Filters</Button>
+            </DrawerFooter>
+          </DrawerContent>
+        </Drawer>
+      </div>
+    </>
   );
 }

@@ -31,6 +31,8 @@ import { SubmissionVolumeChart } from '@/components/submissions/SubmissionVolume
 import { AvgOfferSizeChart } from '@/components/submissions/AvgOfferSizeChart';
 import { SubmissionTimelineChart } from '@/components/submissions/SubmissionTimelineChart';
 import { SubmissionFilterBar } from '@/components/submissions/SubmissionFilterBar';
+import { NormalizationLog } from '@/components/submissions/NormalizationLog';
+import { FilterPresets } from '@/components/submissions/FilterPresets';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import glazerLogo from '@/assets/glazer-logo.png';
 
@@ -76,6 +78,18 @@ const Index = () => {
     pipelineAgeBuckets: [],
     reps: []
   });
+  const [selectedISO, setSelectedISO] = useState<string | null>(null);
+  
+  const handleISOClick = (iso: string) => {
+    setSelectedISO(selectedISO === iso ? null : iso);
+  };
+  
+  const handleApplyFilterPreset = (preset: Partial<SubmissionFilters>) => {
+    setSubmissionFilters(prev => ({
+      ...prev,
+      ...preset
+    }));
+  };
 
   // Scroll detection for mini header
   useEffect(() => {
@@ -557,6 +571,14 @@ const Index = () => {
               </div>
             ) : (
               <div className="space-y-6">
+                {/* Normalization Log */}
+                {normalizationLog.length > 0 && (
+                  <NormalizationLog 
+                    normalizationLog={normalizationLog}
+                    totalRecords={submissions.length}
+                  />
+                )}
+                
                 {/* Data Quality Card */}
                 {dataQuality && <DataQualityCard dataQuality={dataQuality} />}
                 
@@ -573,6 +595,9 @@ const Index = () => {
                   
                   {/* Main Content */}
                   <div className="lg:col-span-3 space-y-6">
+                    {/* Filter Presets */}
+                    <FilterPresets onApplyPreset={handleApplyFilterPreset} />
+                    
                     {/* Summary Stats */}
                     {submissionSummaryStats && (
                       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -600,19 +625,30 @@ const Index = () => {
                     )}
                     
                     {/* ISO Summary Table */}
-                    <ISOSummaryTable metrics={isoMetrics} />
+                    <ISOSummaryTable 
+                      metrics={isoMetrics}
+                      selectedISO={selectedISO}
+                      onISOClick={handleISOClick}
+                    />
                     
                     {/* Charts */}
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                      <SubmissionVolumeChart metrics={isoMetrics} />
-                      <AvgOfferSizeChart metrics={isoMetrics} />
+                      <SubmissionVolumeChart 
+                        metrics={isoMetrics}
+                        selectedISO={selectedISO}
+                      />
+                      <AvgOfferSizeChart 
+                        metrics={isoMetrics}
+                        selectedISO={selectedISO}
+                      />
                     </div>
                     
                     {/* Timeline Chart */}
                     {submissionTimelineData.length > 0 && (
                       <SubmissionTimelineChart 
                         timelineData={submissionTimelineData} 
-                        topISOs={topISOs} 
+                        topISOs={topISOs}
+                        selectedISO={selectedISO}
                       />
                     )}
                     

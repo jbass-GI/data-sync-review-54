@@ -1,12 +1,13 @@
 import { ISOMetrics } from '@/types/submission';
 import { Card } from '@/components/ui/card';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LabelList, Cell } from 'recharts';
 
 interface SubmissionVolumeChartProps {
   metrics: ISOMetrics[];
+  selectedISO?: string | null;
 }
 
-export function SubmissionVolumeChart({ metrics }: SubmissionVolumeChartProps) {
+export function SubmissionVolumeChart({ metrics, selectedISO }: SubmissionVolumeChartProps) {
   const data = metrics
     .sort((a, b) => b.totalSubmissions - a.totalSubmissions)
     .map(m => ({
@@ -30,7 +31,19 @@ export function SubmissionVolumeChart({ metrics }: SubmissionVolumeChartProps) {
                 borderRadius: '6px'
               }}
             />
-            <Bar dataKey="submissions" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
+            <Bar dataKey="submissions" radius={[0, 4, 4, 0]}>
+              {data.map((entry) => (
+                <Cell 
+                  key={entry.iso} 
+                  fill={selectedISO === entry.iso ? 'hsl(var(--destructive))' : 'hsl(var(--primary))'} 
+                />
+              ))}
+              <LabelList 
+                dataKey="submissions" 
+                position="right"
+                style={{ fontSize: 12, fill: 'hsl(var(--muted-foreground))' }}
+              />
+            </Bar>
           </BarChart>
         </ResponsiveContainer>
       </div>

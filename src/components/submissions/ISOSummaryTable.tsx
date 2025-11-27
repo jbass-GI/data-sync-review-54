@@ -1,21 +1,56 @@
 import { useState } from 'react';
+import { format } from 'date-fns';
 import { ISOMetrics } from '@/types/submission';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Card } from '@/components/ui/card';
-import { ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
+import { ArrowUpDown, ArrowUp, ArrowDown, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { toast } from '@/hooks/use-toast';
 
 interface ISOSummaryTableProps {
   metrics: ISOMetrics[];
+  selectedISO: string | null;
   onISOClick?: (iso: string) => void;
 }
 
 type SortField = 'iso' | 'totalSubmissions' | 'avgOfferAmount' | 'offersMade' | 'avgDaysInPipeline' | 'uniqueReps';
 type SortDirection = 'asc' | 'desc';
 
-export function ISOSummaryTable({ metrics, onISOClick }: ISOSummaryTableProps) {
+export function ISOSummaryTable({ metrics, selectedISO, onISOClick }: ISOSummaryTableProps) {
   const [sortField, setSortField] = useState<SortField>('totalSubmissions');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
+  
+  const exportToCSV = () => {
+    const headers = ['ISO Partner', 'Submissions', 'Avg Offer', 'Min Offer', 'Max Offer', 'Offers Made', 'Avg Days', 'Reps'];
+    const rows = sortedMetrics.map(metric => [
+      metric.iso,
+      metric.totalSubmissions,
+      metric.avgOfferAmount,
+      metric.minOffer,
+      metric.maxOffer,
+      metric.offersMade,
+      Math.round(metric.avgDaysInPipeline),
+      metric.uniqueReps
+    ]);
+    
+    const csv = [
+      headers.join(','),
+      ...rows.map(row => row.join(','))
+    ].join('\n');
+    
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `iso-performance-${format(new Date(), 'yyyy-MM-dd')}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    
+    toast({
+      title: "Export successful",
+      description: "ISO performance data has been exported to CSV",
+    });
+  };
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
@@ -53,7 +88,13 @@ export function ISOSummaryTable({ metrics, onISOClick }: ISOSummaryTableProps) {
 
   return (
     <Card className="p-6">
-      <h3 className="text-lg font-semibold mb-4">ISO Performance Summary</h3>
+      <div className="flex justify-between items-center mb-4">
+        <h3 className="text-lg font-semibold">ISO Performance Summary</h3>
+        <Button onClick={exportToCSV} variant="outline" size="sm">
+          <Download className="w-4 h-4 mr-2" />
+          Export to CSV
+        </Button>
+      </div>
       
       <div className="overflow-x-auto">
         <Table>
@@ -103,10 +144,18 @@ export function ISOSummaryTable({ metrics, onISOClick }: ISOSummaryTableProps) {
             {sortedMetrics.map((metric) => (
               <TableRow 
                 key={metric.iso}
-                className="cursor-pointer hover:bg-muted/50"
+                className={`cursor-pointer transition-colors ${
+                  selectedISO === metric.iso 
+                    ? 'bg-primary/10 hover:bg-primary/15' 
+                    : 'hover:bg-muted/50'
+                }`}
                 onClick={() => onISOClick?.(metric.iso)}
               >
-                <TableCell className="font-medium">{metric.iso}</TableCell>
+                <TableCell className={`font-medium ${
+                  selectedISO === metric.iso ? 'text-primary' : ''
+                }`}>
+                  {metric.iso}
+                </TableCell>
                 <TableCell className="text-right">{metric.totalSubmissions}</TableCell>
                 <TableCell className="text-right">{formatCurrency(metric.avgOfferAmount)}</TableCell>
                 <TableCell className="text-right">{formatCurrency(metric.minOffer)}</TableCell>
