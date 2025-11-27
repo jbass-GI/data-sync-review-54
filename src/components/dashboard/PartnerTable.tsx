@@ -12,6 +12,12 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { PartnerMetrics } from '@/types/dashboard';
 import { formatCurrency, formatPercent } from '@/lib/dashboardMetrics';
 import { ArrowUpDown, Merge, X } from 'lucide-react';
@@ -267,20 +273,35 @@ export function PartnerTable({ partners, partnerMerges, onPartnerMergesChange }:
                   <div className="flex items-center gap-2">
                     {partner.partner}
                     {isMergedPartner(partner.partner) && (
-                      <div className="flex items-center gap-1">
-                        <Badge variant="secondary" className="text-xs">
-                          <Merge className="w-3 h-3 mr-1" />
-                          Merged ({partnerMerges.get(partner.partner)?.length})
-                        </Badge>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-5 w-5 p-0"
-                          onClick={() => handleUnmerge(partner.partner)}
-                        >
-                          <X className="w-3 h-3" />
-                        </Button>
-                      </div>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <div className="flex items-center gap-1">
+                              <div className="p-1 rounded hover:bg-accent/50 cursor-pointer">
+                                <Merge className="w-3.5 h-3.5 text-primary" />
+                              </div>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-5 w-5 p-0 hover:bg-destructive/10"
+                                onClick={() => handleUnmerge(partner.partner)}
+                              >
+                                <X className="w-3 h-3 text-muted-foreground hover:text-destructive" />
+                              </Button>
+                            </div>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <div className="space-y-1">
+                              <p className="font-semibold text-xs">Merged Partners:</p>
+                              {partnerMerges.get(partner.partner)?.map((p, idx) => (
+                                <p key={idx} className="text-xs text-muted-foreground">
+                                  • {p}
+                                </p>
+                              ))}
+                            </div>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
                     )}
                   </div>
                 </TableCell>
