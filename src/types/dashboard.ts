@@ -20,8 +20,8 @@ export interface PartnerMetrics {
   avgFeePercent: number;
   newDealsCount: number;
   renewalDealsCount: number;
-  currentStreak?: number; // Positive = win streak, negative = loss streak, 0 = no streak
-  streakType?: 'win' | 'loss' | 'none';
+  consistencyScore?: number; // 0-100 score based on deal patterns
+  consecutiveBusinessDays?: number; // Consecutive business days with deals
 }
 
 export interface DashboardMetrics {

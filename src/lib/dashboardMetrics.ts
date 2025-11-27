@@ -1,7 +1,7 @@
 import { Deal, PartnerMetrics, DashboardMetrics } from '@/types/dashboard';
 import { getChannelType, isDealTypeNew } from './parseExcel';
 import { differenceInDays } from 'date-fns';
-import { calculateAllPartnerStreaks } from './streakAnalysis';
+import { calculateAllPartnerConsistency } from './streakAnalysis';
 
 export function calculateDashboardMetrics(deals: Deal[], dateRange?: { from: Date; to?: Date }): DashboardMetrics {
   const totalFunded = deals.reduce((sum, deal) => sum + deal.fundedAmount, 0);
@@ -45,8 +45,8 @@ export function calculatePartnerMetrics(deals: Deal[]): PartnerMetrics[] {
     partnerMap.set(partnerKey, [...existing, deal]);
   });
   
-  // Calculate streaks for all partners
-  const streaks = calculateAllPartnerStreaks(deals);
+  // Calculate consistency metrics for all partners
+  const consistencyMetrics = calculateAllPartnerConsistency(deals);
   
   const metrics: PartnerMetrics[] = [];
   
@@ -61,7 +61,7 @@ export function calculatePartnerMetrics(deals: Deal[]): PartnerMetrics[] {
     const newDealsCount = partnerDeals.filter(d => isDealTypeNew(d.dealType)).length;
     const renewalDealsCount = dealCount - newDealsCount;
     
-    const streak = streaks.get(partner) || { currentStreak: 0, streakType: 'none' as const };
+    const consistency = consistencyMetrics.get(partner);
     
     metrics.push({
       partner,
@@ -73,8 +73,8 @@ export function calculatePartnerMetrics(deals: Deal[]): PartnerMetrics[] {
       avgFeePercent,
       newDealsCount,
       renewalDealsCount,
-      currentStreak: streak.currentStreak,
-      streakType: streak.streakType
+      consistencyScore: consistency?.consistencyScore || 0,
+      consecutiveBusinessDays: consistency?.consecutiveBusinessDaysWithDeals || 0
     });
   });
   
