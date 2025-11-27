@@ -10,8 +10,9 @@ export function calculateDashboardMetrics(deals: Deal[], dateRange?: { from: Dat
   const avgFeePercent = totalFunded > 0 ? (totalFees / totalFunded) * 100 : 0;
   
   // Calculate prorated target based on date range
-  const baseMonthlyTarget = 30000000; // $30M monthly target
-  const dailyTarget = baseMonthlyTarget / 30; // Assuming 30 days per month
+  const annualTarget = 360000000; // $360M annual target
+  const baseMonthlyTarget = annualTarget / 12; // $30M monthly target
+  const dailyTarget = annualTarget / 365; // Daily target from annual
   
   let monthlyTarget = baseMonthlyTarget;
   if (dateRange?.from) {
