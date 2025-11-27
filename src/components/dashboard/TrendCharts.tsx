@@ -38,7 +38,7 @@ export function TrendCharts({ weeklyTrends, monthlyTrends }: TrendChartsProps) {
           <div key={index} className="flex items-center justify-between gap-4 text-sm">
             <span style={{ color: entry.color }}>{entry.name}:</span>
             <span className="font-semibold">
-              {entry.name.includes('Count') || entry.name.includes('Deals') 
+              {entry.dataKey === 'dealCount' || entry.name === 'Deal Count'
                 ? entry.value 
                 : formatCurrency(entry.value)
               }
