@@ -22,8 +22,11 @@ import { calculateWeeklyTrends, calculateMonthlyTrends } from '@/lib/trendAnalys
 import { comparePeriods, getComparisonPeriods, ComparisonType } from '@/lib/periodComparison';
 import { Deal, PartnerMetrics } from '@/types/dashboard';
 import { Submission, DataQualityMetrics, ISOMetrics } from '@/types/submission';
+import { FundingRecord } from '@/types/funding';
 import { applySubmissionFilters, SubmissionFilters, getFilterOptions as getSubmissionFilterOptions } from '@/lib/submissionFilters';
 import { calculateISOMetrics, getTopISOsByVolume, getSubmissionTimeline } from '@/lib/isoMetrics';
+import { matchSubmissionsToFunding } from '@/lib/fundingMatcher';
+import { enrichSubmissionsWithFunding, calculateConversionMetrics, calculateOverallStats, EnrichedSubmission } from '@/lib/conversionMetrics';
 import { SubmissionUpload } from '@/components/submissions/SubmissionUpload';
 import { DataQualityCard } from '@/components/submissions/DataQualityCard';
 import { ISOSummaryTable } from '@/components/submissions/ISOSummaryTable';
@@ -33,6 +36,11 @@ import { SubmissionTimelineChart } from '@/components/submissions/SubmissionTime
 import { SubmissionFilterBar } from '@/components/submissions/SubmissionFilterBar';
 import { NormalizationLog } from '@/components/submissions/NormalizationLog';
 import { FilterPresets } from '@/components/submissions/FilterPresets';
+import { FundingUpload } from '@/components/submissions/FundingUpload';
+import { UnmatchedReview } from '@/components/submissions/UnmatchedReview';
+import { ConversionTable } from '@/components/submissions/ConversionTable';
+import { ConversionFunnel } from '@/components/submissions/ConversionFunnel';
+import { EfficiencyScatter } from '@/components/submissions/EfficiencyScatter';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import glazerLogo from '@/assets/glazer-logo.png';
 
@@ -40,6 +48,10 @@ const Index = () => {
   const [activeTab, setActiveTab] = useState<'fundings' | 'submissions'>('fundings');
   const [deals, setDeals] = useState<Deal[]>([]);
   const [submissions, setSubmissions] = useState<Submission[]>([]);
+  const [fundingRecords, setFundingRecords] = useState<FundingRecord[]>([]);
+  const [enrichedSubmissions, setEnrichedSubmissions] = useState<EnrichedSubmission[]>([]);
+  const [unmatchedSubmissions, setUnmatchedSubmissions] = useState<Submission[]>([]);
+  const [manualMatches, setManualMatches] = useState<Map<string, string | null>>(new Map());
   const [dataQuality, setDataQuality] = useState<DataQualityMetrics | null>(null);
   const [normalizationLog, setNormalizationLog] = useState<{ original: string; normalized: string }[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -276,12 +288,69 @@ const Index = () => {
     setSubmissions(subs);
     setDataQuality(quality);
     setNormalizationLog(log);
+    
+    // If funding data exists, automatically rematch
+    if (fundingRecords.length > 0) {
+      performMatching(subs, fundingRecords);
+    }
   };
   
-  // Calculate submission metrics
+  const handleFundingDataLoaded = (funding: FundingRecord[]) => {
+    setFundingRecords(funding);
+    
+    // If submissions exist, automatically match
+    if (submissions.length > 0) {
+      performMatching(submissions, funding);
+    }
+    
+    toast({
+      title: "Funding data loaded",
+      description: `${funding.length} funding records ready for matching`,
+    });
+  };
+  
+  const performMatching = (subs: Submission[], funding: FundingRecord[]) => {
+    const matchResult = matchSubmissionsToFunding(subs, funding);
+    
+    // Apply manual matches if any exist
+    const manuallyMatched = matchResult.matched.map(m => {
+      const manualMatch = manualMatches.get(m.submission.name);
+      if (manualMatch) {
+        const fundingRecord = funding.find(f => f.dealName === manualMatch);
+        if (fundingRecord) {
+          return { submission: m.submission, funding: fundingRecord };
+        }
+      }
+      return m;
+    });
+    
+    const enriched = enrichSubmissionsWithFunding(subs, manuallyMatched);
+    setEnrichedSubmissions(enriched);
+    setUnmatchedSubmissions(matchResult.unmatched);
+    
+    toast({
+      title: "Matching complete",
+      description: `${manuallyMatched.length} submissions matched to funding, ${matchResult.unmatched.length} unmatched`,
+    });
+  };
+  
+  const handleManualMatch = (submissionName: string, fundingDealName: string | null) => {
+    const newMatches = new Map(manualMatches);
+    newMatches.set(submissionName, fundingDealName);
+    setManualMatches(newMatches);
+    
+    // Rematch with new manual matches
+    if (submissions.length > 0 && fundingRecords.length > 0) {
+      performMatching(submissions, fundingRecords);
+    }
+  };
+  
+  // Calculate submission/conversion metrics
+  const hasFundingData = fundingRecords.length > 0 && enrichedSubmissions.length > 0;
+  
   const filteredSubmissions = useMemo(() => 
-    applySubmissionFilters(submissions, submissionFilters),
-    [submissions, submissionFilters]
+    applySubmissionFilters(hasFundingData ? enrichedSubmissions : submissions, submissionFilters),
+    [submissions, enrichedSubmissions, submissionFilters, hasFundingData]
   );
   
   const isoMetrics = useMemo(() => 
@@ -289,9 +358,21 @@ const Index = () => {
     [filteredSubmissions]
   );
   
+  const conversionMetrics = useMemo(() => 
+    hasFundingData ? calculateConversionMetrics(filteredSubmissions as EnrichedSubmission[]) : [],
+    [filteredSubmissions, hasFundingData]
+  );
+  
+  const overallConversionStats = useMemo(() => 
+    hasFundingData ? calculateOverallStats(filteredSubmissions as EnrichedSubmission[]) : null,
+    [filteredSubmissions, hasFundingData]
+  );
+  
   const topISOs = useMemo(() => 
-    getTopISOsByVolume(isoMetrics, 5).map(m => m.iso),
-    [isoMetrics]
+    hasFundingData 
+      ? conversionMetrics.slice(0, 5).map(m => m.iso)
+      : getTopISOsByVolume(isoMetrics, 5).map(m => m.iso),
+    [isoMetrics, conversionMetrics, hasFundingData]
   );
   
   const submissionTimelineData = useMemo(() => 
@@ -582,66 +663,73 @@ const Index = () => {
                 {/* Data Quality Card */}
                 {dataQuality && <DataQualityCard dataQuality={dataQuality} />}
                 
-                <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-                  {/* Filter Sidebar */}
-                  <div className="lg:col-span-1">
-                    <SubmissionFilterBar
-                      filters={submissionFilters}
-                      onFiltersChange={setSubmissionFilters}
-                      availableISOs={submissionFilterOptions.isos}
-                      availableReps={submissionFilterOptions.reps}
-                    />
-                  </div>
-                  
-                  {/* Main Content */}
-                  <div className="lg:col-span-3 space-y-6">
-                    {/* Filter Presets */}
-                    <FilterPresets onApplyPreset={handleApplyFilterPreset} />
+                {/* Unmatched Review */}
+                {hasFundingData && unmatchedSubmissions.length > 0 && (
+                  <UnmatchedReview
+                    unmatched={unmatchedSubmissions}
+                    fundingRecords={fundingRecords}
+                    onManualMatch={handleManualMatch}
+                    onClose={() => setUnmatchedSubmissions([])}
+                  />
+                )}
+                
+                {/* Phase 2: Conversion Metrics View (with funding data) */}
+                {hasFundingData && overallConversionStats && (
+                  <div className="space-y-6">
+                    {/* Overall Conversion Stats */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-7 gap-4">
+                      <MetricCard
+                        title="Total Submissions"
+                        value={overallConversionStats.totalSubmissions.toString()}
+                        icon={FileText}
+                      />
+                      <MetricCard
+                        title="Unique ISOs"
+                        value={conversionMetrics.length.toString()}
+                        icon={TrendingUp}
+                      />
+                      <MetricCard
+                        title="Funded Deals"
+                        value={`${overallConversionStats.fundedCount} (${overallConversionStats.overallConversionRate.toFixed(1)}%)`}
+                        icon={DollarSign}
+                      />
+                      <MetricCard
+                        title="Offers Made"
+                        value={`${overallConversionStats.offeredCount} (${overallConversionStats.submissionToOfferRate.toFixed(1)}%)`}
+                        icon={TrendingUp}
+                      />
+                      <MetricCard
+                        title="Avg Days to Fund"
+                        value={`${Math.round(overallConversionStats.avgDaysToFund)}d`}
+                        icon={TrendingDown}
+                      />
+                      <MetricCard
+                        title="Total Revenue"
+                        value={formatCurrency(overallConversionStats.totalRevenue)}
+                        icon={DollarSign}
+                      />
+                      <MetricCard
+                        title="Offer→Fund Rate"
+                        value={`${overallConversionStats.offerToFundedRate.toFixed(1)}%`}
+                        icon={Percent}
+                      />
+                    </div>
                     
-                    {/* Summary Stats */}
-                    {submissionSummaryStats && (
-                      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                        <MetricCard
-                          title="Total Submissions"
-                          value={submissionSummaryStats.totalSubmissions.toString()}
-                          icon={FileText}
-                        />
-                        <MetricCard
-                          title="Avg Offer"
-                          value={formatCurrency(submissionSummaryStats.avgOffer)}
-                          icon={DollarSign}
-                        />
-                        <MetricCard
-                          title="Offers Made"
-                          value={submissionSummaryStats.offersMade.toString()}
-                          icon={TrendingUp}
-                        />
-                        <MetricCard
-                          title="Avg Pipeline Days"
-                          value={`${submissionSummaryStats.avgPipeline}d`}
-                          icon={TrendingDown}
-                        />
-                      </div>
-                    )}
-                    
-                    {/* ISO Summary Table */}
-                    <ISOSummaryTable 
-                      metrics={isoMetrics}
+                    {/* Conversion Table */}
+                    <ConversionTable
+                      metrics={conversionMetrics}
                       selectedISO={selectedISO}
                       onISOClick={handleISOClick}
                     />
                     
-                    {/* Charts */}
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                      <SubmissionVolumeChart 
-                        metrics={isoMetrics}
-                        selectedISO={selectedISO}
-                      />
-                      <AvgOfferSizeChart 
-                        metrics={isoMetrics}
-                        selectedISO={selectedISO}
-                      />
-                    </div>
+                    {/* Conversion Funnel */}
+                    <ConversionFunnel metrics={conversionMetrics} topN={5} />
+                    
+                    {/* Efficiency Scatter Plot */}
+                    <EfficiencyScatter 
+                      metrics={conversionMetrics}
+                      selectedISO={selectedISO}
+                    />
                     
                     {/* Timeline Chart */}
                     {submissionTimelineData.length > 0 && (
@@ -651,11 +739,91 @@ const Index = () => {
                         selectedISO={selectedISO}
                       />
                     )}
-                    
-                    {/* Upload More Data */}
-                    <div className="pt-4">
-                      <SubmissionUpload onDataLoaded={handleSubmissionDataLoaded} />
+                  </div>
+                )}
+                
+                {/* Phase 1: Basic ISO Metrics View (no funding data) */}
+                {!hasFundingData && (
+                  <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                    {/* Filter Sidebar */}
+                    <div className="lg:col-span-1">
+                      <SubmissionFilterBar
+                        filters={submissionFilters}
+                        onFiltersChange={setSubmissionFilters}
+                        availableISOs={submissionFilterOptions.isos}
+                        availableReps={submissionFilterOptions.reps}
+                      />
                     </div>
+                    
+                    {/* Main Content */}
+                    <div className="lg:col-span-3 space-y-6">
+                      {/* Filter Presets */}
+                      <FilterPresets onApplyPreset={handleApplyFilterPreset} />
+                      
+                      {/* Summary Stats */}
+                      {submissionSummaryStats && (
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                          <MetricCard
+                            title="Total Submissions"
+                            value={submissionSummaryStats.totalSubmissions.toString()}
+                            icon={FileText}
+                          />
+                          <MetricCard
+                            title="Avg Offer"
+                            value={formatCurrency(submissionSummaryStats.avgOffer)}
+                            icon={DollarSign}
+                          />
+                          <MetricCard
+                            title="Offers Made"
+                            value={submissionSummaryStats.offersMade.toString()}
+                            icon={TrendingUp}
+                          />
+                          <MetricCard
+                            title="Avg Pipeline Days"
+                            value={`${submissionSummaryStats.avgPipeline}d`}
+                            icon={TrendingDown}
+                          />
+                        </div>
+                      )}
+                      
+                      {/* ISO Summary Table */}
+                      <ISOSummaryTable 
+                        metrics={isoMetrics}
+                        selectedISO={selectedISO}
+                        onISOClick={handleISOClick}
+                      />
+                      
+                      {/* Charts */}
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <SubmissionVolumeChart 
+                          metrics={isoMetrics}
+                          selectedISO={selectedISO}
+                        />
+                        <AvgOfferSizeChart 
+                          metrics={isoMetrics}
+                          selectedISO={selectedISO}
+                        />
+                      </div>
+                      
+                      {/* Timeline Chart */}
+                      {submissionTimelineData.length > 0 && (
+                        <SubmissionTimelineChart 
+                          timelineData={submissionTimelineData} 
+                          topISOs={topISOs}
+                          selectedISO={selectedISO}
+                        />
+                      )}
+                    </div>
+                  </div>
+                )}
+                
+                {/* Upload Options */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-4">
+                  <div>
+                    <SubmissionUpload onDataLoaded={handleSubmissionDataLoaded} />
+                  </div>
+                  <div>
+                    <FundingUpload onDataLoaded={handleFundingDataLoaded} />
                   </div>
                 </div>
               </div>
