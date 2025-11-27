@@ -9,6 +9,7 @@ import { FilterBar } from '@/components/dashboard/FilterBar';
 import { MTDTracking } from '@/components/dashboard/MTDTracking';
 import { TrendCharts } from '@/components/dashboard/TrendCharts';
 import { PartnerComparison } from '@/components/dashboard/PartnerComparison';
+import { ExportMenu } from '@/components/dashboard/ExportMenu';
 import { parseExcelFile } from '@/lib/parseExcel';
 import { calculateDashboardMetrics, calculatePartnerMetrics, formatCurrency, formatPercent } from '@/lib/dashboardMetrics';
 import { applyFilters, getFilterOptions, DashboardFilters, getDateRangeFromPreset } from '@/lib/filterUtils';
@@ -83,6 +84,7 @@ const Index = () => {
     <div className="min-h-screen bg-background">
       {/* Header */}
       {/* Header */}
+      {/* Header */}
       <header className="border-b border-border/50 bg-card/30 backdrop-blur">
         <div className="container mx-auto px-6 py-6">
           <div className="flex items-center justify-between">
@@ -94,11 +96,21 @@ const Index = () => {
                 MCA Production Dashboard
               </p>
             </div>
-            <div className="text-right">
-              <p className="text-sm text-muted-foreground">January 2025</p>
-              <p className="text-xs text-muted-foreground mt-1">
-                Updated in real-time
-              </p>
+            <div className="flex items-center gap-4">
+              {deals.length > 0 && (
+                <ExportMenu 
+                  deals={filteredDeals}
+                  partners={partnerMetrics}
+                  metrics={metrics}
+                  filters={filters}
+                />
+              )}
+              <div className="text-right">
+                <p className="text-sm text-muted-foreground">January 2025</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Updated in real-time
+                </p>
+              </div>
             </div>
           </div>
         </div>
