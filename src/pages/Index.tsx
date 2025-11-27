@@ -106,60 +106,53 @@ const Index = () => {
   const partnerMetrics = useMemo(() => {
     if (partnerMerges.size === 0) return rawPartnerMetrics;
     
-    const mergedMetrics = new Map<string, PartnerMetrics>();
+    const mergedMetrics: PartnerMetrics[] = [];
     const processedPartners = new Set<string>();
     
-    // Process each partner
+    // First, create all merged partners
+    partnerMerges.forEach((partnerNames, mergedName) => {
+      const partnersToMerge = rawPartnerMetrics.filter(m => partnerNames.includes(m.partner));
+      
+      if (partnersToMerge.length === 0) return;
+      
+      // Mark all individual partners as processed
+      partnerNames.forEach(name => processedPartners.add(name));
+      
+      // Create merged partner
+      const merged: PartnerMetrics = {
+        partner: mergedName,
+        channelType: partnersToMerge[0].channelType,
+        totalFunded: partnersToMerge.reduce((sum, p) => sum + p.totalFunded, 0),
+        totalFees: partnersToMerge.reduce((sum, p) => sum + p.totalFees, 0),
+        dealCount: partnersToMerge.reduce((sum, p) => sum + p.dealCount, 0),
+        avgTicketSize: 0,
+        avgFeePercent: 0,
+        newDealsCount: partnersToMerge.reduce((sum, p) => sum + p.newDealsCount, 0),
+        renewalDealsCount: partnersToMerge.reduce((sum, p) => sum + p.renewalDealsCount, 0),
+        consistencyScore: Math.round(partnersToMerge.reduce((sum, p) => sum + (p.consistencyScore || 0), 0) / partnersToMerge.length),
+        consecutiveBusinessDays: Math.max(...partnersToMerge.map(p => p.consecutiveBusinessDays || 0)),
+        consecutiveNewDeals: Math.max(...partnersToMerge.map(p => p.consecutiveNewDeals || 0)),
+        consecutiveRenewalDeals: Math.max(...partnersToMerge.map(p => p.consecutiveRenewalDeals || 0)),
+        daysWithMultipleDeals: partnersToMerge.reduce((sum, p) => sum + (p.daysWithMultipleDeals || 0), 0),
+        maxDealsInDay: Math.max(...partnersToMerge.map(p => p.maxDealsInDay || 0))
+      };
+      
+      // Recalculate averages
+      merged.avgTicketSize = merged.totalFunded / merged.dealCount;
+      merged.avgFeePercent = (merged.totalFees / merged.totalFunded) * 100;
+      
+      mergedMetrics.push(merged);
+    });
+    
+    // Then add all non-merged partners
     rawPartnerMetrics.forEach(metric => {
-      if (processedPartners.has(metric.partner)) return;
-      
-      // Check if this partner is part of a merge
-      let mergeGroup: string[] | undefined;
-      let mergeKey: string | undefined;
-      
-      partnerMerges.forEach((partners, key) => {
-        if (partners.includes(metric.partner)) {
-          mergeGroup = partners;
-          mergeKey = key;
-        }
-      });
-      
-      if (mergeGroup && mergeKey) {
-        // Merge all partners in this group
-        const partnersToMerge = rawPartnerMetrics.filter(m => mergeGroup!.includes(m.partner));
-        
-        const merged: PartnerMetrics = {
-          partner: mergeKey,
-          channelType: partnersToMerge[0].channelType,
-          totalFunded: partnersToMerge.reduce((sum, p) => sum + p.totalFunded, 0),
-          totalFees: partnersToMerge.reduce((sum, p) => sum + p.totalFees, 0),
-          dealCount: partnersToMerge.reduce((sum, p) => sum + p.dealCount, 0),
-          avgTicketSize: 0,
-          avgFeePercent: 0,
-          newDealsCount: partnersToMerge.reduce((sum, p) => sum + p.newDealsCount, 0),
-          renewalDealsCount: partnersToMerge.reduce((sum, p) => sum + p.renewalDealsCount, 0),
-          consistencyScore: Math.round(partnersToMerge.reduce((sum, p) => sum + (p.consistencyScore || 0), 0) / partnersToMerge.length),
-          consecutiveBusinessDays: Math.max(...partnersToMerge.map(p => p.consecutiveBusinessDays || 0)),
-          consecutiveNewDeals: Math.max(...partnersToMerge.map(p => p.consecutiveNewDeals || 0)),
-          consecutiveRenewalDeals: Math.max(...partnersToMerge.map(p => p.consecutiveRenewalDeals || 0)),
-          daysWithMultipleDeals: partnersToMerge.reduce((sum, p) => sum + (p.daysWithMultipleDeals || 0), 0),
-          maxDealsInDay: Math.max(...partnersToMerge.map(p => p.maxDealsInDay || 0))
-        };
-        
-        // Recalculate averages
-        merged.avgTicketSize = merged.totalFunded / merged.dealCount;
-        merged.avgFeePercent = (merged.totalFees / merged.totalFunded) * 100;
-        
-        mergedMetrics.set(mergeKey, merged);
-        partnersToMerge.forEach(p => processedPartners.add(p.partner));
-      } else {
-        // No merge, keep as is
-        mergedMetrics.set(metric.partner, metric);
-        processedPartners.add(metric.partner);
+      if (!processedPartners.has(metric.partner)) {
+        mergedMetrics.push(metric);
       }
     });
     
-    return Array.from(mergedMetrics.values()).sort((a, b) => b.totalFunded - a.totalFunded);
+    // Sort by total funded
+    return mergedMetrics.sort((a, b) => b.totalFunded - a.totalFunded);
   }, [rawPartnerMetrics, partnerMerges]);
   
   // Get display labels based on current filter
