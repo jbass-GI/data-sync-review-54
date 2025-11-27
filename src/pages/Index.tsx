@@ -1,10 +1,12 @@
 import { useState, useMemo } from 'react';
 import { DollarSign, TrendingUp, FileText, Percent } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 import { MetricCard } from '@/components/dashboard/MetricCard';
 import { ProgressBar } from '@/components/dashboard/ProgressBar';
 import { PartnerTable } from '@/components/dashboard/PartnerTable';
 import { DealTypeChart } from '@/components/dashboard/DealTypeChart';
 import { FileUpload } from '@/components/dashboard/FileUpload';
+import { DataUploadOptions } from '@/components/dashboard/DataUploadOptions';
 import { FilterBar } from '@/components/dashboard/FilterBar';
 import { MTDTracking } from '@/components/dashboard/MTDTracking';
 import { TrendCharts } from '@/components/dashboard/TrendCharts';
@@ -21,6 +23,7 @@ import glazerLogo from '@/assets/glazer-logo.png';
 const Index = () => {
   const [deals, setDeals] = useState<Deal[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
   const [filters, setFilters] = useState<DashboardFilters>({
     datePreset: 'mtd', // Default to Month-to-Date
     dealType: 'all',
@@ -32,22 +35,46 @@ const Index = () => {
     quarters: []
   });
 
-  const handleFileUpload = async (file: File) => {
+  const handleFileUpload = async (file: File, mode: 'replace' | 'append' = 'replace') => {
     setIsLoading(true);
     try {
       const parsedDeals = await parseExcelFile(file);
-      setDeals(parsedDeals);
-      // Reset filters to MTD when new data is uploaded
-      setFilters({
-        datePreset: 'mtd',
-        dealType: 'all',
-        partners: [],
-        channelTypes: [],
-        lifecycleTypes: [],
-        ticketSizeBuckets: [],
-        months: [],
-        quarters: []
-      });
+      
+      if (mode === 'append') {
+        // Merge new deals with existing deals
+        // Create a Set of existing deal identifiers to avoid duplicates
+        const existingDealIds = new Set(
+          deals.map(d => `${d.dealName}-${d.fundingDate.toISOString()}-${d.partner}`)
+        );
+        
+        // Filter out duplicates and add new deals
+        const newUniqueDeals = parsedDeals.filter(
+          d => !existingDealIds.has(`${d.dealName}-${d.fundingDate.toISOString()}-${d.partner}`)
+        );
+        
+        const duplicatesCount = parsedDeals.length - newUniqueDeals.length;
+        setDeals([...deals, ...newUniqueDeals]);
+        
+        // Show success message with details
+        toast({
+          title: "Data merged successfully",
+          description: `Added ${newUniqueDeals.length} new deals${duplicatesCount > 0 ? ` (${duplicatesCount} duplicates skipped)` : ''}`,
+        });
+      } else {
+        // Replace all data
+        setDeals(parsedDeals);
+        // Reset filters to MTD when new data is uploaded
+        setFilters({
+          datePreset: 'mtd',
+          dealType: 'all',
+          partners: [],
+          channelTypes: [],
+          lifecycleTypes: [],
+          ticketSizeBuckets: [],
+          months: [],
+          quarters: []
+        });
+      }
     } catch (error) {
       console.error('Error parsing file:', error);
     } finally {
@@ -236,9 +263,12 @@ const Index = () => {
               <PartnerComparison partners={partnerMetrics} />
             )}
 
-            {/* Upload New File */}
+            {/* Upload Options */}
             <div className="pt-4">
-              <FileUpload onFileUpload={handleFileUpload} />
+              <DataUploadOptions 
+                onFileUpload={handleFileUpload}
+                hasExistingData={deals.length > 0}
+              />
             </div>
           </div>
         )}
