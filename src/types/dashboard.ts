@@ -5,6 +5,7 @@ export interface Deal {
   fundedAmount: number;
   mgmtFeeTotal: number;
   partner: string;
+  partnerNormalized: string; // Normalized partner name for consistent grouping
   dealType: string;
   notes?: string;
 }
