@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { DollarSign, TrendingUp, FileText, Percent } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { MetricCard } from '@/components/dashboard/MetricCard';
@@ -8,6 +8,7 @@ import { DealTypeChart } from '@/components/dashboard/DealTypeChart';
 import { FileUpload } from '@/components/dashboard/FileUpload';
 import { DataUploadOptions } from '@/components/dashboard/DataUploadOptions';
 import { FilterBar } from '@/components/dashboard/FilterBar';
+import { MiniHeader } from '@/components/dashboard/MiniHeader';
 import { MTDTracking } from '@/components/dashboard/MTDTracking';
 import { TrendCharts } from '@/components/dashboard/TrendCharts';
 import { PartnerComparison } from '@/components/dashboard/PartnerComparison';
@@ -35,6 +36,28 @@ const Index = () => {
     quarters: []
   });
   const [partnerMerges, setPartnerMerges] = useState<Map<string, string[]>>(new Map());
+  const [showMiniHeader, setShowMiniHeader] = useState(false);
+  const [lastScrollY, setLastScrollY] = useState(0);
+
+  // Scroll detection for mini header
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      const headerHeight = 200; // Approximate height of main header
+
+      // Show mini header when scrolled past main header and scrolling down
+      if (currentScrollY > headerHeight) {
+        setShowMiniHeader(true);
+      } else {
+        setShowMiniHeader(false);
+      }
+
+      setLastScrollY(currentScrollY);
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [lastScrollY]);
 
   const handleFileUpload = async (file: File, mode: 'replace' | 'append' = 'replace') => {
     setIsLoading(true);
@@ -169,6 +192,15 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      {/* Mini Header */}
+      {deals.length > 0 && (
+        <MiniHeader 
+          filters={filters}
+          onFiltersChange={setFilters}
+          isVisible={showMiniHeader}
+        />
+      )}
+
       {/* Header */}
       <header className="border-b border-border/50 bg-gradient-to-r from-card via-card to-card/80 backdrop-blur relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5 pointer-events-none" />
