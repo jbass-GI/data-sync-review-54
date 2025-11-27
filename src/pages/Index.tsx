@@ -137,6 +137,34 @@ const Index = () => {
               Upload your Excel file to view production analytics and partner performance
             </p>
           </div>
+        ) : !filteredDeals.length || !metrics ? (
+          <div className="max-w-2xl mx-auto mt-12 text-center">
+            <div className="bg-card/50 backdrop-blur border border-border/50 rounded-lg p-8">
+              <FileText className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+              <h3 className="text-xl font-semibold mb-2">No deals match your filters</h3>
+              <p className="text-muted-foreground mb-6">
+                Try adjusting your filters or clearing them to see more data
+              </p>
+              <button
+                onClick={() => setFilters({
+                  datePreset: 'mtd',
+                  dealType: 'all',
+                  partners: [],
+                  channelTypes: [],
+                  lifecycleTypes: [],
+                  ticketSizeBuckets: [],
+                  months: [],
+                  quarters: []
+                })}
+                className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
+              >
+                Reset Filters
+              </button>
+            </div>
+            <div className="mt-8">
+              <FileUpload onFileUpload={handleFileUpload} />
+            </div>
+          </div>
         ) : (
           <div className="space-y-6">
             {/* MTD Tracking & Projections */}
