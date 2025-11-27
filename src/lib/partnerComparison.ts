@@ -144,6 +144,24 @@ export function comparePartners(
       : 0
   });
 
+  // Average Fee Per Deal
+  const avgFeePerDeal1 = partner1.dealCount > 0 ? partner1.totalFees / partner1.dealCount : 0;
+  const avgFeePerDeal2 = partner2.dealCount > 0 ? partner2.totalFees / partner2.dealCount : 0;
+  const avgFeePerDealDiff = avgFeePerDeal1 - avgFeePerDeal2;
+  const avgFeePerDealLoserValue = avgFeePerDealDiff > 0 ? avgFeePerDeal2 : avgFeePerDeal1;
+  metrics.push({
+    label: 'Avg Fee/Deal',
+    partner1Value: avgFeePerDeal1,
+    partner2Value: avgFeePerDeal2,
+    partner1Display: formatCurrency(avgFeePerDeal1),
+    partner2Display: formatCurrency(avgFeePerDeal2),
+    winner: avgFeePerDealDiff > 0 ? 'partner1' : avgFeePerDealDiff < 0 ? 'partner2' : 'tie',
+    difference: Math.abs(avgFeePerDealDiff),
+    differencePercent: avgFeePerDealLoserValue > 0 
+      ? (Math.abs(avgFeePerDealDiff) / avgFeePerDealLoserValue) * 100 
+      : 0
+  });
+
   // New Deals Count
   const newDealsDiff = partner1.newDealsCount - partner2.newDealsCount;
   const newDealsLoserValue = newDealsDiff > 0 ? partner2.newDealsCount : partner1.newDealsCount;
