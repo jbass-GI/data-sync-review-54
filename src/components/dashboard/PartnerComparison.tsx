@@ -128,16 +128,16 @@ export function PartnerComparison({ partners }: PartnerComparisonProps) {
                     </Badge>
                   </div>
                   <p className="text-sm text-muted-foreground mt-1">
-                    {formatCurrency(partner.totalFunded)} • {partner.dealCount} deals
+                    {formatCurrency(partner.totalFunded)} funded • {partner.dealCount} deals
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    {formatCurrency(partner.totalFees)} fees • {formatPercent(partner.avgFeePercent)} avg
                   </p>
                 </div>
 
                 <div className="text-right">
                   <div className="text-lg font-bold text-primary">
                     Top {Math.round(partner.percentileRank)}%
-                  </div>
-                  <div className="text-xs text-muted-foreground">
-                    {formatPercent(partner.avgFeePercent)} avg fee
                   </div>
                 </div>
               </div>
