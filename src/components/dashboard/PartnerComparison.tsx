@@ -113,9 +113,9 @@ export function PartnerComparison({ partners }: PartnerComparisonProps) {
                 <tr className="border-b border-border/50">
                   <th className="text-left py-3 px-2 text-xs font-medium text-muted-foreground">Rank</th>
                   <th className="text-left py-3 px-4 text-xs font-medium text-muted-foreground">Partner</th>
-                  <th className="text-left py-3 px-4 text-xs font-medium text-muted-foreground">Type</th>
                   <th className="text-right py-3 px-4 text-xs font-medium text-muted-foreground">Total Funded</th>
                   <th className="text-right py-3 px-4 text-xs font-medium text-muted-foreground">Total Fees</th>
+                  <th className="text-right py-3 px-4 text-xs font-medium text-muted-foreground">Avg Fee/Deal</th>
                   <th className="text-center py-3 px-4 text-xs font-medium text-muted-foreground">Deals</th>
                   <th className="text-right py-3 px-4 text-xs font-medium text-muted-foreground">Avg Ticket</th>
                   <th className="text-right py-3 px-4 text-xs font-medium text-muted-foreground">Avg Fee %</th>
@@ -135,9 +135,7 @@ export function PartnerComparison({ partners }: PartnerComparisonProps) {
                     </td>
                     <td className="py-3 px-4">
                       <div className="font-semibold text-sm">{partner.partner}</div>
-                    </td>
-                    <td className="py-3 px-4">
-                      <Badge variant="secondary" className="text-xs">
+                      <Badge variant="secondary" className="text-xs mt-1">
                         {partner.channelType}
                       </Badge>
                     </td>
@@ -146,6 +144,11 @@ export function PartnerComparison({ partners }: PartnerComparisonProps) {
                     </td>
                     <td className="py-3 px-4 text-right">
                       <div className="font-semibold text-sm text-success">{formatCurrency(partner.totalFees)}</div>
+                    </td>
+                    <td className="py-3 px-4 text-right">
+                      <div className="font-semibold text-sm text-primary">
+                        {formatCurrency(partner.dealCount > 0 ? partner.totalFees / partner.dealCount : 0)}
+                      </div>
                     </td>
                     <td className="py-3 px-4 text-center">
                       <Badge variant="outline" className="text-xs">
