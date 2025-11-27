@@ -12,7 +12,7 @@ import { PartnerComparison } from '@/components/dashboard/PartnerComparison';
 import { ExportMenu } from '@/components/dashboard/ExportMenu';
 import { parseExcelFile } from '@/lib/parseExcel';
 import { calculateDashboardMetrics, calculatePartnerMetrics, formatCurrency, formatPercent } from '@/lib/dashboardMetrics';
-import { applyFilters, getFilterOptions, DashboardFilters, getDateRangeFromPreset } from '@/lib/filterUtils';
+import { applyFilters, getFilterOptions, DashboardFilters, getDateRangeFromPreset, getFilterDisplayLabels } from '@/lib/filterUtils';
 import { calculateMTDMetrics } from '@/lib/mtdProjections';
 import { calculateWeeklyTrends, calculateMonthlyTrends } from '@/lib/trendAnalysis';
 import { Deal } from '@/types/dashboard';
@@ -73,6 +73,9 @@ const Index = () => {
 
   const metrics = filteredDeals.length > 0 ? calculateDashboardMetrics(filteredDeals, dateRangeForMetrics) : null;
   const partnerMetrics = filteredDeals.length > 0 ? calculatePartnerMetrics(filteredDeals) : [];
+  
+  // Get display labels based on current filter
+  const displayLabels = getFilterDisplayLabels(filters.datePreset);
   
   // Calculate MTD projections (only when viewing MTD or all data)
   const mtdMetrics = deals.length > 0 && (filters.datePreset === 'mtd' || filters.datePreset === 'all')
@@ -178,7 +181,7 @@ const Index = () => {
             {/* KPI Metrics */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               <MetricCard
-                title="Total Funded (MTD)"
+                title={displayLabels.fundedLabel}
                 value={formatCurrency(metrics!.totalFunded)}
                 icon={DollarSign}
                 trend="up"
@@ -198,14 +201,14 @@ const Index = () => {
               <MetricCard
                 title="Total Deals"
                 value={metrics!.dealCount.toString()}
-                subValue="Closed this month"
+                subValue={displayLabels.dealsLabel}
                 icon={FileText}
               />
             </div>
 
             {/* Progress Bar */}
             <ProgressBar
-              title="Monthly Target Progress"
+              title={displayLabels.targetLabel}
               current={formatCurrency(metrics!.totalFunded)}
               target={formatCurrency(metrics!.monthlyTarget)}
               percentage={metrics!.targetProgress}
