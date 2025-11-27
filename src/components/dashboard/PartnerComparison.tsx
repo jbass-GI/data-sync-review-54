@@ -185,174 +185,178 @@ export function PartnerComparison({ partners }: PartnerComparisonProps) {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
-          {/* Partner Selection */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="text-sm font-medium mb-2 block">Partner 1</label>
-              <Select value={selectedPartner1} onValueChange={setSelectedPartner1}>
-                <SelectTrigger className="bg-background">
-                  <SelectValue placeholder="Select first partner" />
-                </SelectTrigger>
-                <SelectContent className="bg-background z-50">
-                  {partners.map(partner => (
-                    <SelectItem 
-                      key={partner.partner} 
-                      value={partner.partner}
-                      disabled={partner.partner === selectedPartner2}
-                    >
-                      {partner.partner}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <label className="text-sm font-medium mb-2 block">Partner 2</label>
-              <Select value={selectedPartner2} onValueChange={setSelectedPartner2}>
-                <SelectTrigger className="bg-background">
-                  <SelectValue placeholder="Select second partner" />
-                </SelectTrigger>
-                <SelectContent className="bg-background z-50">
-                  {partners.map(partner => (
-                    <SelectItem 
-                      key={partner.partner} 
-                      value={partner.partner}
-                      disabled={partner.partner === selectedPartner1}
-                    >
-                      {partner.partner}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          {/* Comparison Results */}
-          {comparison && partner1Data && partner2Data ? (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Performance Radar Chart */}
-              <div className="bg-card/30 rounded-lg p-6">
-                <h4 className="text-sm font-semibold mb-4">Performance Comparison</h4>
-                <ResponsiveContainer width="100%" height={300}>
-                  <RadarChart data={radarData}>
-                    <PolarGrid stroke="hsl(var(--border))" />
-                    <PolarAngleAxis 
-                      dataKey="metric" 
-                      tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
-                    />
-                    <PolarRadiusAxis 
-                      angle={90} 
-                      domain={[0, 100]}
-                      tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }}
-                    />
-                    <Radar
-                      name={selectedPartner1}
-                      dataKey={selectedPartner1}
-                      stroke="hsl(var(--chart-1))"
-                      fill="hsl(var(--chart-1))"
-                      fillOpacity={0.3}
-                      strokeWidth={2}
-                    />
-                    <Radar
-                      name={selectedPartner2}
-                      dataKey={selectedPartner2}
-                      stroke="hsl(var(--chart-2))"
-                      fill="hsl(var(--chart-2))"
-                      fillOpacity={0.3}
-                      strokeWidth={2}
-                    />
-                    <Legend />
-                    <Tooltip content={<CustomRadarTooltip />} />
-                  </RadarChart>
-                </ResponsiveContainer>
-              </div>
-
-              {/* Metric-by-Metric Comparison */}
+          <div className="max-w-7xl mx-auto">
+            {/* Partner Selection */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
               <div>
-                <h4 className="text-sm font-semibold mb-4">Metric Breakdown</h4>
-                <div className="space-y-2">
-                  {comparison.map((metric, index) => (
-                    <div
-                      key={index}
-                      className="grid grid-cols-[1fr,auto,1fr] gap-3 items-center p-3 rounded-lg bg-card/30 border border-border/50"
-                    >
-                      {/* Partner 1 Value */}
-                      <div className={`text-right ${getWinnerColor(metric.winner, 'partner1')}`}>
-                        <div className="text-sm font-semibold">
-                          {metric.partner1Display}
-                        </div>
-                        {metric.winner === 'partner1' && (
-                          <div className="text-xs text-success mt-0.5">
-                            +{formatPercent(metric.differencePercent, 0)}
-                          </div>
-                        )}
-                      </div>
+                <label className="text-sm font-medium mb-2 block">Partner 1</label>
+                <Select value={selectedPartner1} onValueChange={setSelectedPartner1}>
+                  <SelectTrigger className="bg-background">
+                    <SelectValue placeholder="Select first partner" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-background z-50">
+                    {partners.map(partner => (
+                      <SelectItem 
+                        key={partner.partner} 
+                        value={partner.partner}
+                        disabled={partner.partner === selectedPartner2}
+                      >
+                        {partner.partner}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-                      {/* Metric Label */}
-                      <div className="text-center min-w-[100px]">
-                        <div className="text-xs font-medium text-muted-foreground">
-                          {metric.label}
-                        </div>
-                        {metric.winner !== 'tie' && (
-                          <TrendingUp 
-                            className={`h-3 w-3 mx-auto mt-1 ${
-                              metric.winner === 'partner1' ? 'rotate-180' : ''
-                            } text-primary`}
-                          />
-                        )}
-                      </div>
+              <div>
+                <label className="text-sm font-medium mb-2 block">Partner 2</label>
+                <Select value={selectedPartner2} onValueChange={setSelectedPartner2}>
+                  <SelectTrigger className="bg-background">
+                    <SelectValue placeholder="Select second partner" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-background z-50">
+                    {partners.map(partner => (
+                      <SelectItem 
+                        key={partner.partner} 
+                        value={partner.partner}
+                        disabled={partner.partner === selectedPartner1}
+                      >
+                        {partner.partner}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
 
-                      {/* Partner 2 Value */}
-                      <div className={`text-left ${getWinnerColor(metric.winner, 'partner2')}`}>
-                        <div className="text-sm font-semibold">
-                          {metric.partner2Display}
-                        </div>
-                        {metric.winner === 'partner2' && (
-                          <div className="text-xs text-success mt-0.5">
-                            +{formatPercent(metric.differencePercent, 0)}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  ))}
+            {/* Comparison Results */}
+            {comparison && partner1Data && partner2Data ? (
+              <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                {/* Performance Radar Chart */}
+                <div className="bg-card/30 rounded-lg p-6">
+                  <h4 className="text-sm font-semibold mb-4">Performance Comparison</h4>
+                  <div className="max-w-md mx-auto">
+                    <ResponsiveContainer width="100%" height={300}>
+                      <RadarChart data={radarData}>
+                        <PolarGrid stroke="hsl(var(--border))" />
+                        <PolarAngleAxis 
+                          dataKey="metric" 
+                          tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 12 }}
+                        />
+                        <PolarRadiusAxis 
+                          angle={90} 
+                          domain={[0, 100]}
+                          tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }}
+                        />
+                        <Radar
+                          name={selectedPartner1}
+                          dataKey={selectedPartner1}
+                          stroke="hsl(var(--chart-1))"
+                          fill="hsl(var(--chart-1))"
+                          fillOpacity={0.3}
+                          strokeWidth={2}
+                        />
+                        <Radar
+                          name={selectedPartner2}
+                          dataKey={selectedPartner2}
+                          stroke="hsl(var(--chart-2))"
+                          fill="hsl(var(--chart-2))"
+                          fillOpacity={0.3}
+                          strokeWidth={2}
+                        />
+                        <Legend />
+                        <Tooltip content={<CustomRadarTooltip />} />
+                      </RadarChart>
+                    </ResponsiveContainer>
+                  </div>
                 </div>
 
-                {/* Win Summary */}
-                <div className="grid grid-cols-3 gap-3 mt-6 p-4 bg-card/30 rounded-lg">
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-chart-1">
-                      {comparison.filter(m => m.winner === 'partner1').length}
-                    </div>
-                    <div className="text-xs text-muted-foreground mt-1">
-                      Wins
-                    </div>
+                {/* Metric-by-Metric Comparison */}
+                <div>
+                  <h4 className="text-sm font-semibold mb-4">Metric Breakdown</h4>
+                  <div className="space-y-2 max-w-2xl">
+                    {comparison.map((metric, index) => (
+                      <div
+                        key={index}
+                        className="grid grid-cols-[1fr,auto,1fr] gap-3 items-center p-3 rounded-lg bg-card/30 border border-border/50"
+                      >
+                        {/* Partner 1 Value */}
+                        <div className={`text-right ${getWinnerColor(metric.winner, 'partner1')}`}>
+                          <div className="text-sm font-semibold">
+                            {metric.partner1Display}
+                          </div>
+                          {metric.winner === 'partner1' && (
+                            <div className="text-xs text-success mt-0.5">
+                              +{formatPercent(metric.differencePercent, 0)}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Metric Label */}
+                        <div className="text-center min-w-[100px]">
+                          <div className="text-xs font-medium text-muted-foreground">
+                            {metric.label}
+                          </div>
+                          {metric.winner !== 'tie' && (
+                            <TrendingUp 
+                              className={`h-3 w-3 mx-auto mt-1 ${
+                                metric.winner === 'partner1' ? 'rotate-180' : ''
+                              } text-primary`}
+                            />
+                          )}
+                        </div>
+
+                        {/* Partner 2 Value */}
+                        <div className={`text-left ${getWinnerColor(metric.winner, 'partner2')}`}>
+                          <div className="text-sm font-semibold">
+                            {metric.partner2Display}
+                          </div>
+                          {metric.winner === 'partner2' && (
+                            <div className="text-xs text-success mt-0.5">
+                              +{formatPercent(metric.differencePercent, 0)}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-muted-foreground">
-                      {comparison.filter(m => m.winner === 'tie').length}
+
+                  {/* Win Summary */}
+                  <div className="grid grid-cols-3 gap-3 mt-6 p-4 bg-card/30 rounded-lg max-w-2xl">
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-chart-1">
+                        {comparison.filter(m => m.winner === 'partner1').length}
+                      </div>
+                      <div className="text-xs text-muted-foreground mt-1">
+                        Wins
+                      </div>
                     </div>
-                    <div className="text-xs text-muted-foreground mt-1">
-                      Ties
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-muted-foreground">
+                        {comparison.filter(m => m.winner === 'tie').length}
+                      </div>
+                      <div className="text-xs text-muted-foreground mt-1">
+                        Ties
+                      </div>
                     </div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-chart-2">
-                      {comparison.filter(m => m.winner === 'partner2').length}
-                    </div>
-                    <div className="text-xs text-muted-foreground mt-1">
-                      Wins
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-chart-2">
+                        {comparison.filter(m => m.winner === 'partner2').length}
+                      </div>
+                      <div className="text-xs text-muted-foreground mt-1">
+                        Wins
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
-            </div>
-          ) : (
-            <div className="text-center py-12 text-muted-foreground">
-              <Target className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>Select two partners to compare their performance</p>
-            </div>
-          )}
+            ) : (
+              <div className="text-center py-12 text-muted-foreground">
+                <Target className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                <p>Select two partners to compare their performance</p>
+              </div>
+            )}
+          </div>
         </CardContent>
       </Card>
     </div>
