@@ -1,10 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { DollarSign, TrendingUp, FileText, Percent } from 'lucide-react';
+import { DateRange } from 'react-day-picker';
 import { MetricCard } from '@/components/dashboard/MetricCard';
 import { ProgressBar } from '@/components/dashboard/ProgressBar';
 import { PartnerTable } from '@/components/dashboard/PartnerTable';
 import { DealTypeChart } from '@/components/dashboard/DealTypeChart';
 import { FileUpload } from '@/components/dashboard/FileUpload';
+import { DateRangeFilter } from '@/components/dashboard/DateRangeFilter';
 import { parseExcelFile } from '@/lib/parseExcel';
 import { calculateDashboardMetrics, calculatePartnerMetrics, formatCurrency, formatPercent } from '@/lib/dashboardMetrics';
 import { Deal } from '@/types/dashboard';
@@ -12,6 +14,7 @@ import { Deal } from '@/types/dashboard';
 const Index = () => {
   const [deals, setDeals] = useState<Deal[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
 
   const handleFileUpload = async (file: File) => {
     setIsLoading(true);
@@ -25,29 +28,57 @@ const Index = () => {
     }
   };
 
-  const metrics = deals.length > 0 ? calculateDashboardMetrics(deals) : null;
-  const partnerMetrics = deals.length > 0 ? calculatePartnerMetrics(deals) : [];
+  // Filter deals by date range
+  const filteredDeals = useMemo(() => {
+    if (!dateRange?.from || deals.length === 0) return deals;
+    
+    return deals.filter(deal => {
+      const dealDate = deal.fundingDate;
+      const isAfterStart = dealDate >= dateRange.from!;
+      const isBeforeEnd = !dateRange.to || dealDate <= dateRange.to;
+      return isAfterStart && isBeforeEnd;
+    });
+  }, [deals, dateRange]);
+
+  const metrics = filteredDeals.length > 0 ? calculateDashboardMetrics(filteredDeals) : null;
+  const partnerMetrics = filteredDeals.length > 0 ? calculatePartnerMetrics(filteredDeals) : [];
 
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="border-b border-border/50 bg-card/30 backdrop-blur">
         <div className="container mx-auto px-6 py-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-gradient">
-                Glazer Investments
-              </h1>
-              <p className="text-sm text-muted-foreground mt-1">
-                MCA Production Dashboard
-              </p>
+          <div className="flex flex-col gap-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-3xl font-bold text-gradient">
+                  Glazer Investments
+                </h1>
+                <p className="text-sm text-muted-foreground mt-1">
+                  MCA Production Dashboard
+                </p>
+              </div>
+              <div className="text-right">
+                <p className="text-sm text-muted-foreground">January 2025</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Updated in real-time
+                </p>
+              </div>
             </div>
-            <div className="text-right">
-              <p className="text-sm text-muted-foreground">January 2025</p>
-              <p className="text-xs text-muted-foreground mt-1">
-                Updated in real-time
-              </p>
-            </div>
+            
+            {deals.length > 0 && (
+              <div className="flex items-center gap-4">
+                <DateRangeFilter 
+                  dateRange={dateRange} 
+                  onDateRangeChange={setDateRange}
+                />
+                {dateRange && (
+                  <p className="text-sm text-muted-foreground">
+                    Showing {filteredDeals.length} of {deals.length} deals
+                  </p>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </header>
