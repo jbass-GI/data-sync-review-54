@@ -8,7 +8,12 @@ export const MASTER_PARTNERS = [
   "LENDFLOW",
   "GLAZER/SAMSON",
   "PLATFORM",
-  "DIRECT"
+  "DIRECT",
+  "PMF NY",
+  "CFI",
+  "BLUELINE",
+  "VIKING",
+  "FIRST UNION"
 ] as const;
 
 // Normalization mappings for common variations
@@ -49,7 +54,30 @@ const PARTNER_MAPPINGS: Record<string, string> = {
   "DIREC": "DIRECT",
   "DRECT": "DIRECT",
   "IN-HOUSE": "DIRECT",
-  "INHOUSE": "DIRECT"
+  "INHOUSE": "DIRECT",
+  
+  // PMF NY variations
+  "PMF-NY": "PMF NY",
+  "P.M.F. NY": "PMF NY",
+  "P.M.F NY": "PMF NY",
+  "PMFNY": "PMF NY",
+  "PMF N Y": "PMF NY",
+  
+  // CFI variations
+  "C.F.I": "CFI",
+  "C.F.I.": "CFI",
+  "C F I": "CFI",
+  "CFI.": "CFI",
+  
+  // Blueline variations
+  "BLUE LINE": "BLUELINE",
+  "BLUE-LINE": "BLUELINE",
+  "BLUE_LINE": "BLUELINE",
+  
+  // Viking variations
+  "VIKING ADMIN": "VIKING",
+  "VIKING ADMINISTRATION": "VIKING",
+  "VIKING ADM": "VIKING"
 };
 
 /**

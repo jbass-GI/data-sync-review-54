@@ -21,10 +21,25 @@ import { calculateMTDMetrics } from '@/lib/mtdProjections';
 import { calculateWeeklyTrends, calculateMonthlyTrends } from '@/lib/trendAnalysis';
 import { comparePeriods, getComparisonPeriods, ComparisonType } from '@/lib/periodComparison';
 import { Deal, PartnerMetrics } from '@/types/dashboard';
+import { Submission, DataQualityMetrics, ISOMetrics } from '@/types/submission';
+import { applySubmissionFilters, SubmissionFilters, getFilterOptions as getSubmissionFilterOptions } from '@/lib/submissionFilters';
+import { calculateISOMetrics, getTopISOsByVolume, getSubmissionTimeline } from '@/lib/isoMetrics';
+import { SubmissionUpload } from '@/components/submissions/SubmissionUpload';
+import { DataQualityCard } from '@/components/submissions/DataQualityCard';
+import { ISOSummaryTable } from '@/components/submissions/ISOSummaryTable';
+import { SubmissionVolumeChart } from '@/components/submissions/SubmissionVolumeChart';
+import { AvgOfferSizeChart } from '@/components/submissions/AvgOfferSizeChart';
+import { SubmissionTimelineChart } from '@/components/submissions/SubmissionTimelineChart';
+import { SubmissionFilterBar } from '@/components/submissions/SubmissionFilterBar';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import glazerLogo from '@/assets/glazer-logo.png';
 
 const Index = () => {
+  const [activeTab, setActiveTab] = useState<'fundings' | 'submissions'>('fundings');
   const [deals, setDeals] = useState<Deal[]>([]);
+  const [submissions, setSubmissions] = useState<Submission[]>([]);
+  const [dataQuality, setDataQuality] = useState<DataQualityMetrics | null>(null);
+  const [normalizationLog, setNormalizationLog] = useState<{ original: string; normalized: string }[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   
@@ -51,6 +66,16 @@ const Index = () => {
   const [lastScrollY, setLastScrollY] = useState(0);
   const [comparisonType, setComparisonType] = useState<ComparisonType>('none');
   const isComparisonActive = comparisonType !== 'none';
+  
+  // Submission filters
+  const [submissionFilters, setSubmissionFilters] = useState<SubmissionFilters>({
+    datePreset: 'all',
+    isos: [],
+    stages: [],
+    offerSizeBuckets: [],
+    pipelineAgeBuckets: [],
+    reps: []
+  });
 
   // Scroll detection for mini header
   useEffect(() => {
@@ -227,6 +252,60 @@ const Index = () => {
       setComparisonType('none');
     }
   };
+  
+  // Submission data handlers
+  const handleSubmissionDataLoaded = (
+    subs: Submission[],
+    quality: DataQualityMetrics,
+    log: { original: string; normalized: string }[]
+  ) => {
+    setSubmissions(subs);
+    setDataQuality(quality);
+    setNormalizationLog(log);
+  };
+  
+  // Calculate submission metrics
+  const filteredSubmissions = useMemo(() => 
+    applySubmissionFilters(submissions, submissionFilters),
+    [submissions, submissionFilters]
+  );
+  
+  const isoMetrics = useMemo(() => 
+    calculateISOMetrics(filteredSubmissions),
+    [filteredSubmissions]
+  );
+  
+  const topISOs = useMemo(() => 
+    getTopISOsByVolume(isoMetrics, 5).map(m => m.iso),
+    [isoMetrics]
+  );
+  
+  const submissionTimelineData = useMemo(() => 
+    getSubmissionTimeline(filteredSubmissions, topISOs),
+    [filteredSubmissions, topISOs]
+  );
+  
+  const submissionFilterOptions = useMemo(() => 
+    getSubmissionFilterOptions(submissions),
+    [submissions]
+  );
+  
+  // Calculate summary stats for submissions
+  const submissionSummaryStats = useMemo(() => {
+    if (filteredSubmissions.length === 0) return null;
+    
+    const totalSubs = filteredSubmissions.length;
+    const avgOffer = filteredSubmissions.reduce((sum, s) => sum + s.offerAmount, 0) / totalSubs;
+    const offersMade = filteredSubmissions.filter(s => s.stageCategory === 'Offered' || s.stageCategory === 'Funded').length;
+    const avgDays = filteredSubmissions.reduce((sum, s) => sum + s.daysInPipeline, 0) / totalSubs;
+    
+    return {
+      totalSubmissions: totalSubs,
+      avgOffer: Math.round(avgOffer),
+      offersMade,
+      avgPipeline: Math.round(avgDays)
+    };
+  }, [filteredSubmissions]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -310,6 +389,15 @@ const Index = () => {
       )}
 
       <main className="container mx-auto px-6 py-8">
+        {/* Tabs */}
+        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'fundings' | 'submissions')} className="mb-6">
+          <TabsList className="grid w-full max-w-md grid-cols-2">
+            <TabsTrigger value="fundings">Fundings Dashboard</TabsTrigger>
+            <TabsTrigger value="submissions">ISO Submissions</TabsTrigger>
+          </TabsList>
+          
+          {/* Fundings Tab */}
+          <TabsContent value="fundings">
         {!deals.length ? (
           <div className="max-w-2xl mx-auto mt-12">
             <FileUpload onFileUpload={handleFileUpload} />
@@ -456,6 +544,88 @@ const Index = () => {
             </div>
           </div>
         )}
+          </TabsContent>
+          
+          {/* Submissions Tab */}
+          <TabsContent value="submissions">
+            {!submissions.length ? (
+              <div className="max-w-2xl mx-auto mt-12">
+                <SubmissionUpload onDataLoaded={handleSubmissionDataLoaded} />
+                <p className="text-center text-muted-foreground mt-6 text-sm">
+                  Upload your Monday.com export to analyze ISO submission performance
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-6">
+                {/* Data Quality Card */}
+                {dataQuality && <DataQualityCard dataQuality={dataQuality} />}
+                
+                <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                  {/* Filter Sidebar */}
+                  <div className="lg:col-span-1">
+                    <SubmissionFilterBar
+                      filters={submissionFilters}
+                      onFiltersChange={setSubmissionFilters}
+                      availableISOs={submissionFilterOptions.isos}
+                      availableReps={submissionFilterOptions.reps}
+                    />
+                  </div>
+                  
+                  {/* Main Content */}
+                  <div className="lg:col-span-3 space-y-6">
+                    {/* Summary Stats */}
+                    {submissionSummaryStats && (
+                      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <MetricCard
+                          title="Total Submissions"
+                          value={submissionSummaryStats.totalSubmissions.toString()}
+                          icon={FileText}
+                        />
+                        <MetricCard
+                          title="Avg Offer"
+                          value={formatCurrency(submissionSummaryStats.avgOffer)}
+                          icon={DollarSign}
+                        />
+                        <MetricCard
+                          title="Offers Made"
+                          value={submissionSummaryStats.offersMade.toString()}
+                          icon={TrendingUp}
+                        />
+                        <MetricCard
+                          title="Avg Pipeline Days"
+                          value={`${submissionSummaryStats.avgPipeline}d`}
+                          icon={TrendingDown}
+                        />
+                      </div>
+                    )}
+                    
+                    {/* ISO Summary Table */}
+                    <ISOSummaryTable metrics={isoMetrics} />
+                    
+                    {/* Charts */}
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                      <SubmissionVolumeChart metrics={isoMetrics} />
+                      <AvgOfferSizeChart metrics={isoMetrics} />
+                    </div>
+                    
+                    {/* Timeline Chart */}
+                    {submissionTimelineData.length > 0 && (
+                      <SubmissionTimelineChart 
+                        timelineData={submissionTimelineData} 
+                        topISOs={topISOs} 
+                      />
+                    )}
+                    
+                    {/* Upload More Data */}
+                    <div className="pt-4">
+                      <SubmissionUpload onDataLoaded={handleSubmissionDataLoaded} />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </TabsContent>
+        </Tabs>
       </main>
     </div>
   );
