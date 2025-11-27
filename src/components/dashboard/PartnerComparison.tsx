@@ -9,7 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Trophy, TrendingUp, Users, Target, Award, Crown } from 'lucide-react';
+import { Trophy, TrendingUp, Users, Target, Award, Crown, Flame, TrendingDown } from 'lucide-react';
 import { PartnerMetrics } from '@/types/dashboard';
 import { 
   calculatePartnerRankings, 
@@ -113,6 +113,7 @@ export function PartnerComparison({ partners }: PartnerComparisonProps) {
                 <tr className="border-b border-border/50">
                   <th className="text-left py-3 px-2 text-xs font-medium text-muted-foreground">Rank</th>
                   <th className="text-left py-3 px-4 text-xs font-medium text-muted-foreground">Partner</th>
+                  <th className="text-center py-3 px-4 text-xs font-medium text-muted-foreground">Streak</th>
                   <th className="text-right py-3 px-4 text-xs font-medium text-muted-foreground">Total Funded</th>
                   <th className="text-right py-3 px-4 text-xs font-medium text-muted-foreground">Total Fees</th>
                   <th className="text-right py-3 px-4 text-xs font-medium text-muted-foreground">Avg Fee/Deal</th>
@@ -138,6 +139,29 @@ export function PartnerComparison({ partners }: PartnerComparisonProps) {
                       <Badge variant="secondary" className="text-xs mt-1">
                         {partner.channelType}
                       </Badge>
+                    </td>
+                    <td className="py-3 px-4">
+                      {partner.currentStreak !== undefined && partner.currentStreak !== 0 ? (
+                        <div className="flex items-center justify-center gap-1">
+                          {partner.streakType === 'win' ? (
+                            <>
+                              <Flame className="h-4 w-4 text-success" />
+                              <span className="text-sm font-semibold text-success">
+                                {Math.abs(partner.currentStreak)}
+                              </span>
+                            </>
+                          ) : (
+                            <>
+                              <TrendingDown className="h-4 w-4 text-destructive" />
+                              <span className="text-sm font-semibold text-destructive">
+                                {Math.abs(partner.currentStreak)}
+                              </span>
+                            </>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="text-center text-xs text-muted-foreground">-</div>
+                      )}
                     </td>
                     <td className="py-3 px-4 text-right">
                       <div className="font-semibold text-sm">{formatCurrency(partner.totalFunded)}</div>
