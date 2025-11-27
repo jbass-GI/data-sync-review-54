@@ -39,44 +39,49 @@ export const TICKET_SIZE_BUCKETS = [
 ];
 
 /**
- * Get date range based on preset
+ * Get date range based on preset and actual data
  */
-export function getDateRangeFromPreset(preset: string): { from: Date; to: Date } {
-  const today = new Date();
+export function getDateRangeFromPreset(preset: string, deals?: Deal[]): { from: Date; to: Date } {
+  // Use the most recent deal date as "today" if data exists, otherwise use actual today
+  let referenceDate = new Date();
+  if (deals && deals.length > 0) {
+    const dealDates = deals.map(d => d.fundingDate);
+    referenceDate = new Date(Math.max(...dealDates.map(d => d.getTime())));
+  }
   
   switch (preset) {
     case 'today':
-      return { from: today, to: today };
+      return { from: referenceDate, to: referenceDate };
     
     case 'yesterday':
-      const yesterday = subDays(today, 1);
+      const yesterday = subDays(referenceDate, 1);
       return { from: yesterday, to: yesterday };
     
     case 'mtd':
-      return { from: startOfMonth(today), to: today };
+      return { from: startOfMonth(referenceDate), to: referenceDate };
     
     case 'last7':
-      return { from: subDays(today, 7), to: today };
+      return { from: subDays(referenceDate, 7), to: referenceDate };
     
     case 'last30':
-      return { from: subDays(today, 30), to: today };
+      return { from: subDays(referenceDate, 30), to: referenceDate };
     
     case 'qtd':
-      return { from: startOfQuarter(today), to: today };
+      return { from: startOfQuarter(referenceDate), to: referenceDate };
     
     case 'ytd':
-      return { from: startOfYear(today), to: today };
+      return { from: startOfYear(referenceDate), to: referenceDate };
     
     case 'lastMonth':
-      const lastMonth = subMonths(today, 1);
+      const lastMonth = subMonths(referenceDate, 1);
       return { from: startOfMonth(lastMonth), to: endOfMonth(lastMonth) };
     
     case 'lastQuarter':
-      const lastQuarter = subQuarters(today, 1);
+      const lastQuarter = subQuarters(referenceDate, 1);
       return { from: startOfQuarter(lastQuarter), to: endOfQuarter(lastQuarter) };
     
     default:
-      return { from: startOfMonth(today), to: today };
+      return { from: startOfMonth(referenceDate), to: referenceDate };
   }
 }
 
@@ -136,7 +141,8 @@ export function applyFilters(deals: Deal[], filters: DashboardFilters): Deal[] {
       return isAfterStart && isBeforeEnd;
     });
   } else if (filters.datePreset !== 'all') {
-    const dateRange = getDateRangeFromPreset(filters.datePreset);
+    // Pass all deals to get proper reference date
+    const dateRange = getDateRangeFromPreset(filters.datePreset, deals);
     filtered = filtered.filter(deal => {
       const dealDate = deal.fundingDate;
       return dealDate >= dateRange.from && dealDate <= dateRange.to;
