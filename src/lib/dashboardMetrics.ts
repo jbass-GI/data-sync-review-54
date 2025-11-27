@@ -74,7 +74,10 @@ export function calculatePartnerMetrics(deals: Deal[]): PartnerMetrics[] {
       newDealsCount,
       renewalDealsCount,
       consistencyScore: consistency?.consistencyScore || 0,
-      consecutiveBusinessDays: consistency?.consecutiveBusinessDaysWithDeals || 0
+      consecutiveBusinessDays: consistency?.consecutiveBusinessDaysWithDeals || 0,
+      consecutiveNewDeals: consistency?.consecutiveNewDeals || 0,
+      consecutiveRenewalDeals: consistency?.consecutiveRenewalDeals || 0,
+      daysWithMultipleDeals: consistency?.daysWithMultipleDeals || 0
     });
   });
   

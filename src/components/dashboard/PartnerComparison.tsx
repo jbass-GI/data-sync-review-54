@@ -9,6 +9,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  Tooltip as TooltipUI,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { Trophy, TrendingUp, Users, Target, Award, Crown, Zap } from 'lucide-react';
 import { PartnerMetrics } from '@/types/dashboard';
 import { 
@@ -142,23 +148,52 @@ export function PartnerComparison({ partners }: PartnerComparisonProps) {
                     </td>
                     <td className="py-3 px-4">
                       {partner.consistencyScore !== undefined && partner.consistencyScore > 0 ? (
-                        <div className="flex flex-col items-center gap-1">
-                          <div className="flex items-center gap-1">
-                            <Zap className="h-4 w-4 text-warning" />
-                            <span className={`text-sm font-semibold ${
-                              partner.consistencyScore >= 70 ? 'text-success' :
-                              partner.consistencyScore >= 40 ? 'text-warning' :
-                              'text-muted-foreground'
-                            }`}>
-                              {partner.consistencyScore}
-                            </span>
-                          </div>
-                          {partner.consecutiveBusinessDays !== undefined && partner.consecutiveBusinessDays > 0 && (
-                            <span className="text-xs text-muted-foreground">
-                              {partner.consecutiveBusinessDays}d streak
-                            </span>
-                          )}
-                        </div>
+                        <TooltipProvider>
+                          <TooltipUI>
+                            <TooltipTrigger asChild>
+                              <div className="flex flex-col items-center gap-1 cursor-help">
+                                <div className="flex items-center gap-1">
+                                  <Zap className="h-4 w-4 text-warning" />
+                                  <span className={`text-sm font-semibold ${
+                                    partner.consistencyScore >= 70 ? 'text-success' :
+                                    partner.consistencyScore >= 40 ? 'text-warning' :
+                                    'text-muted-foreground'
+                                  }`}>
+                                    {partner.consistencyScore}
+                                  </span>
+                                </div>
+                                {partner.consecutiveBusinessDays !== undefined && partner.consecutiveBusinessDays > 0 && (
+                                  <span className="text-xs text-muted-foreground">
+                                    {partner.consecutiveBusinessDays}d streak
+                                  </span>
+                                )}
+                              </div>
+                            </TooltipTrigger>
+                            <TooltipContent className="max-w-xs">
+                              <div className="space-y-2">
+                                <p className="font-semibold text-sm mb-2">Consistency Breakdown</p>
+                                <div className="space-y-1 text-xs">
+                                  <div className="flex justify-between gap-4">
+                                    <span className="text-muted-foreground">Business day streak:</span>
+                                    <span className="font-semibold">{partner.consecutiveBusinessDays || 0} days</span>
+                                  </div>
+                                  <div className="flex justify-between gap-4">
+                                    <span className="text-muted-foreground">Multiple deal days:</span>
+                                    <span className="font-semibold">{partner.daysWithMultipleDeals || 0} days</span>
+                                  </div>
+                                  <div className="flex justify-between gap-4">
+                                    <span className="text-muted-foreground">Consecutive new deals:</span>
+                                    <span className="font-semibold">{partner.consecutiveNewDeals || 0}</span>
+                                  </div>
+                                  <div className="flex justify-between gap-4">
+                                    <span className="text-muted-foreground">Consecutive renewals:</span>
+                                    <span className="font-semibold">{partner.consecutiveRenewalDeals || 0}</span>
+                                  </div>
+                                </div>
+                              </div>
+                            </TooltipContent>
+                          </TooltipUI>
+                        </TooltipProvider>
                       ) : (
                         <div className="text-center text-xs text-muted-foreground">-</div>
                       )}
