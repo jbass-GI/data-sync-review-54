@@ -174,7 +174,7 @@ export function PartnerComparison({ partners }: PartnerComparisonProps) {
                                 <p className="font-semibold text-sm mb-2">Consistency Breakdown</p>
                                 <div className="space-y-1 text-xs">
                                   <div className="flex justify-between gap-4">
-                                    <span className="text-muted-foreground">Business day streak:</span>
+                                    <span className="text-muted-foreground">Funding Day Streak:</span>
                                     <span className="font-semibold">{partner.consecutiveBusinessDays || 0} days</span>
                                   </div>
                                   <div className="flex justify-between gap-4">
