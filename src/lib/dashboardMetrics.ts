@@ -45,9 +45,11 @@ export function calculateDashboardMetrics(deals: Deal[], dateRange?: { from: Dat
 export function calculatePartnerMetrics(deals: Deal[]): PartnerMetrics[] {
   const partnerMap = new Map<string, Deal[]>();
   
+  // Group by normalized partner name for consistent reporting
   deals.forEach(deal => {
-    const existing = partnerMap.get(deal.partner) || [];
-    partnerMap.set(deal.partner, [...existing, deal]);
+    const partnerKey = deal.partnerNormalized;
+    const existing = partnerMap.get(partnerKey) || [];
+    partnerMap.set(partnerKey, [...existing, deal]);
   });
   
   const metrics: PartnerMetrics[] = [];

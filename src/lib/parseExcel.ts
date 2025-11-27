@@ -1,5 +1,6 @@
 import * as XLSX from 'xlsx';
 import { Deal } from '@/types/dashboard';
+import { normalizePartner, getChannelTypeFromNormalized } from './partnerNormalization';
 
 export function parseExcelFile(file: File): Promise<Deal[]> {
   return new Promise((resolve, reject) => {
@@ -64,6 +65,7 @@ export function parseExcelFile(file: File): Promise<Deal[]> {
             fundedAmount,
             mgmtFeeTotal,
             partner,
+            partnerNormalized: normalizePartner(partner),
             dealType,
             notes
           });
@@ -80,10 +82,11 @@ export function parseExcelFile(file: File): Promise<Deal[]> {
   });
 }
 
+// Legacy function - kept for backwards compatibility
+// Use getChannelTypeFromNormalized from partnerNormalization.ts instead
 export function getChannelType(partner: string): 'Direct' | 'Platform' | 'ISO' {
-  if (partner === 'Direct') return 'Direct';
-  if (partner === 'Platform') return 'Platform';
-  return 'ISO';
+  const normalized = normalizePartner(partner);
+  return getChannelTypeFromNormalized(normalized);
 }
 
 export function isDealTypeNew(dealType: string): boolean {
