@@ -35,7 +35,7 @@ function isUSBankHoliday(date: Date): boolean {
 }
 
 /**
- * Calculate consecutive business days with deals
+ * Calculate the longest consecutive business days streak with deals during the period
  */
 function calculateConsecutiveBusinessDays(dealDays: DealDay[]): number {
   if (dealDays.length === 0) return 0;
@@ -46,35 +46,37 @@ function calculateConsecutiveBusinessDays(dealDays: DealDay[]): number {
     dealDateMap.set(dd.date, dd);
   });
   
-  // Find the most recent deal date
-  const mostRecentDate = [...dealDays]
-    .sort((a, b) => b.date.localeCompare(a.date))[0].date;
+  // Find the date range
+  const dates = dealDays.map(dd => new Date(dd.date)).sort((a, b) => a.getTime() - b.getTime());
+  const startDate = dates[0];
+  const endDate = dates[dates.length - 1];
   
-  let consecutiveDays = 0;
-  let currentDate = new Date(mostRecentDate);
+  // Generate all business days in the range
+  const businessDays: string[] = [];
+  let currentDate = new Date(startDate);
   
-  // Walk backwards from most recent date, checking each business day
-  while (true) {
-    const dateKey = format(currentDate, 'yyyy-MM-dd');
-    
-    // Skip weekends and holidays
-    if (isWeekend(currentDate) || isUSBankHoliday(currentDate)) {
-      currentDate.setDate(currentDate.getDate() - 1);
-      continue;
+  while (currentDate <= endDate) {
+    if (!isWeekend(currentDate) && !isUSBankHoliday(currentDate)) {
+      businessDays.push(format(currentDate, 'yyyy-MM-dd'));
     }
-    
-    // Check if this business day has deals
-    const dealDay = dealDateMap.get(dateKey);
+    currentDate.setDate(currentDate.getDate() + 1);
+  }
+  
+  // Find longest consecutive streak of business days with deals
+  let maxStreak = 0;
+  let currentStreak = 0;
+  
+  for (const businessDay of businessDays) {
+    const dealDay = dealDateMap.get(businessDay);
     if (dealDay && dealDay.deals.length > 0) {
-      consecutiveDays++;
-      currentDate.setDate(currentDate.getDate() - 1);
+      currentStreak++;
+      maxStreak = Math.max(maxStreak, currentStreak);
     } else {
-      // Found a business day with no deals - streak ends
-      break;
+      currentStreak = 0;
     }
   }
   
-  return consecutiveDays;
+  return maxStreak;
 }
 
 /**
@@ -113,28 +115,37 @@ export function calculateConsistencyMetrics(deals: Deal[]): ConsistencyMetrics {
     isBusinessDay: !isWeekend(new Date(date)) && !isUSBankHoliday(new Date(date))
   }));
   
-  // Calculate consecutive business days with deals
+  // Calculate consecutive business days with deals (longest streak in period)
   const consecutiveBusinessDaysWithDeals = calculateConsecutiveBusinessDays(dealDays);
   
-  // Calculate consecutive new deals (most recent streak)
+  // Calculate longest consecutive new deals streak in the period
   let consecutiveNewDeals = 0;
-  for (const deal of sortedDeals) {
+  let currentNewStreak = 0;
+  const chronologicalDeals = [...deals].sort((a, b) => 
+    a.fundingDate.getTime() - b.fundingDate.getTime()
+  );
+  
+  for (const deal of chronologicalDeals) {
     const isNew = deal.dealType.toUpperCase().includes('NEW');
     if (isNew) {
-      consecutiveNewDeals++;
+      currentNewStreak++;
+      consecutiveNewDeals = Math.max(consecutiveNewDeals, currentNewStreak);
     } else {
-      break;
+      currentNewStreak = 0;
     }
   }
   
-  // Calculate consecutive renewal deals (most recent streak)
+  // Calculate longest consecutive renewal deals streak in the period
   let consecutiveRenewalDeals = 0;
-  for (const deal of sortedDeals) {
+  let currentRenewalStreak = 0;
+  
+  for (const deal of chronologicalDeals) {
     const isRenewal = deal.dealType.toUpperCase().includes('RENEW');
     if (isRenewal) {
-      consecutiveRenewalDeals++;
+      currentRenewalStreak++;
+      consecutiveRenewalDeals = Math.max(consecutiveRenewalDeals, currentRenewalStreak);
     } else {
-      break;
+      currentRenewalStreak = 0;
     }
   }
   
