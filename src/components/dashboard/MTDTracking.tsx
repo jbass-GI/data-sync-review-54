@@ -74,8 +74,8 @@ export function MTDTracking({ metrics }: MTDTrackingProps) {
               </span>
             </div>
             <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">Days Remaining:</span>
-              <span className="font-semibold">{metrics.daysRemaining} days</span>
+              <span className="text-muted-foreground">Business Days Left:</span>
+              <span className="font-semibold">{metrics.businessDaysRemaining} days</span>
             </div>
           </div>
 
@@ -103,10 +103,10 @@ export function MTDTracking({ metrics }: MTDTrackingProps) {
               <span className="text-3xl font-bold">
                 {formatCompactCurrency(metrics.dailyBurnRate)}
               </span>
-              <span className="text-sm text-muted-foreground">/day</span>
+              <span className="text-sm text-muted-foreground">/bus. day</span>
             </div>
             <p className="text-sm text-muted-foreground mt-1">
-              Current daily average
+              Current daily average (business days)
             </p>
           </div>
 
@@ -114,13 +114,13 @@ export function MTDTracking({ metrics }: MTDTrackingProps) {
             <div className="flex items-center justify-between text-sm">
               <span className="text-muted-foreground">Target Rate:</span>
               <span className="font-semibold">
-                {formatCompactCurrency(metrics.targetDailyBurnRate)}/day
+                {formatCompactCurrency(metrics.targetDailyBurnRate)}/bus. day
               </span>
             </div>
             <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">Business Days:</span>
+              <span className="text-muted-foreground">Business Days Used:</span>
               <span className="font-semibold">
-                {formatCompactCurrency(metrics.businessDailyBurnRate)}/day
+                {metrics.businessDaysElapsed} of {metrics.businessDaysElapsed + metrics.businessDaysRemaining}
               </span>
             </div>
             <div className="flex items-center justify-between text-sm">
@@ -163,10 +163,10 @@ export function MTDTracking({ metrics }: MTDTrackingProps) {
               <span className="text-3xl font-bold">
                 {formatCompactCurrency(metrics.requiredDailyPace)}
               </span>
-              <span className="text-sm text-muted-foreground">/day</span>
+              <span className="text-sm text-muted-foreground">/bus. day</span>
             </div>
             <p className="text-sm text-muted-foreground mt-1">
-              Required to hit target
+              Required per business day to hit target
             </p>
           </div>
 
@@ -174,7 +174,7 @@ export function MTDTracking({ metrics }: MTDTrackingProps) {
             <div className="flex items-center justify-between text-sm">
               <span className="text-muted-foreground">Current Pace:</span>
               <span className="font-semibold">
-                {formatCompactCurrency(metrics.dailyBurnRate)}/day
+                {formatCompactCurrency(metrics.dailyBurnRate)}/bus. day
               </span>
             </div>
             <div className="flex items-center justify-between text-sm">
@@ -199,7 +199,7 @@ export function MTDTracking({ metrics }: MTDTrackingProps) {
               </div>
               <Progress value={metrics.targetProgress} className="h-2" />
               <p className="text-xs text-muted-foreground">
-                {metrics.daysElapsed} of {metrics.daysElapsed + metrics.daysRemaining} days elapsed
+                {metrics.businessDaysElapsed} of {metrics.businessDaysElapsed + metrics.businessDaysRemaining} business days elapsed
               </p>
             </div>
           </div>
