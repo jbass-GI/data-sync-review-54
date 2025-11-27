@@ -11,8 +11,8 @@ export function calculateDashboardMetrics(deals: Deal[], dateRange?: { from: Dat
   const avgFeePercent = totalFunded > 0 ? (totalFees / totalFunded) * 100 : 0;
   
   // Calculate appropriate target based on date range
-  const annualTarget = 360000000; // $360M annual target
-  const monthlyTarget = annualTarget / 12; // $30M monthly target
+  const annualTarget = 300000000; // $300M annual target
+  const monthlyTarget = annualTarget / 12; // $25M monthly target
   
   let targetAmount = monthlyTarget;
   if (dateRange?.from && dateRange?.to) {
