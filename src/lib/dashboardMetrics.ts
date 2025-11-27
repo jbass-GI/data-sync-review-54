@@ -1,15 +1,26 @@
 import { Deal, PartnerMetrics, DashboardMetrics } from '@/types/dashboard';
 import { getChannelType, isDealTypeNew } from './parseExcel';
+import { differenceInDays } from 'date-fns';
 
-export function calculateDashboardMetrics(deals: Deal[]): DashboardMetrics {
+export function calculateDashboardMetrics(deals: Deal[], dateRange?: { from: Date; to?: Date }): DashboardMetrics {
   const totalFunded = deals.reduce((sum, deal) => sum + deal.fundedAmount, 0);
   const totalFees = deals.reduce((sum, deal) => sum + deal.mgmtFeeTotal, 0);
   const dealCount = deals.length;
   const avgTicketSize = dealCount > 0 ? totalFunded / dealCount : 0;
   const avgFeePercent = totalFunded > 0 ? (totalFees / totalFunded) * 100 : 0;
   
-  const monthlyTarget = 30000000; // $30M target
-  const targetProgress = (totalFunded / monthlyTarget) * 100;
+  // Calculate prorated target based on date range
+  const baseMonthlyTarget = 30000000; // $30M monthly target
+  const dailyTarget = baseMonthlyTarget / 30; // Assuming 30 days per month
+  
+  let monthlyTarget = baseMonthlyTarget;
+  if (dateRange?.from) {
+    const endDate = dateRange.to || new Date();
+    const daysInRange = differenceInDays(endDate, dateRange.from) + 1; // +1 to include both start and end dates
+    monthlyTarget = dailyTarget * daysInRange;
+  }
+  
+  const targetProgress = monthlyTarget > 0 ? (totalFunded / monthlyTarget) * 100 : 0;
   
   const newDeals = deals.filter(d => isDealTypeNew(d.dealType));
   const renewalDeals = deals.filter(d => !isDealTypeNew(d.dealType));

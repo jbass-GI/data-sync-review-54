@@ -40,7 +40,7 @@ const Index = () => {
     });
   }, [deals, dateRange]);
 
-  const metrics = filteredDeals.length > 0 ? calculateDashboardMetrics(filteredDeals) : null;
+  const metrics = filteredDeals.length > 0 ? calculateDashboardMetrics(filteredDeals, dateRange) : null;
   const partnerMetrics = filteredDeals.length > 0 ? calculatePartnerMetrics(filteredDeals) : [];
 
   return (
