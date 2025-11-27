@@ -1,0 +1,34 @@
+export interface Deal {
+  dealName: string;
+  feePercent: number;
+  fundingDate: Date;
+  fundedAmount: number;
+  mgmtFeeTotal: number;
+  partner: string;
+  dealType: string;
+  notes?: string;
+}
+
+export interface PartnerMetrics {
+  partner: string;
+  channelType: 'Direct' | 'Platform' | 'ISO';
+  totalFunded: number;
+  totalFees: number;
+  dealCount: number;
+  avgTicketSize: number;
+  avgFeePercent: number;
+  newDealsCount: number;
+  renewalDealsCount: number;
+}
+
+export interface DashboardMetrics {
+  totalFunded: number;
+  totalFees: number;
+  dealCount: number;
+  avgTicketSize: number;
+  avgFeePercent: number;
+  monthlyTarget: number;
+  targetProgress: number;
+  newDealsFunded: number;
+  renewalDealsFunded: number;
+}
