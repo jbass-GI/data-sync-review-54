@@ -135,7 +135,17 @@ export function TrendCharts({ weeklyTrends, monthlyTrends }: TrendChartsProps) {
               <h4 className="text-sm font-semibold mb-4">New vs Renewal Mix</h4>
               <ResponsiveContainer width="100%" height={300}>
                 <BarChart data={monthlyTrends}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                  <defs>
+                    <linearGradient id="barNewDealsMonthly" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="hsl(var(--chart-1))" stopOpacity={0.9}/>
+                      <stop offset="95%" stopColor="hsl(var(--chart-1))" stopOpacity={0.5}/>
+                    </linearGradient>
+                    <linearGradient id="barRenewalsMonthly" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="hsl(var(--chart-2))" stopOpacity={0.9}/>
+                      <stop offset="95%" stopColor="hsl(var(--chart-2))" stopOpacity={0.5}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.3} />
                   <XAxis 
                     dataKey="monthLabel" 
                     stroke="hsl(var(--muted-foreground))"
@@ -152,13 +162,14 @@ export function TrendCharts({ weeklyTrends, monthlyTrends }: TrendChartsProps) {
                     dataKey="newDealsFunded" 
                     name="New Deals" 
                     stackId="a"
-                    fill="hsl(var(--chart-1))" 
+                    fill="url(#barNewDeals)"
+                    radius={[6, 6, 0, 0]}
                   />
                   <Bar 
                     dataKey="renewalDealsFunded" 
                     name="Renewals" 
                     stackId="a"
-                    fill="hsl(var(--chart-2))" 
+                    fill="url(#barRenewals)"
                   />
                 </BarChart>
               </ResponsiveContainer>
@@ -232,7 +243,21 @@ export function TrendCharts({ weeklyTrends, monthlyTrends }: TrendChartsProps) {
               <h4 className="text-sm font-semibold mb-4">Weekly Production</h4>
               <ResponsiveContainer width="100%" height={300}>
                 <BarChart data={weeklyTrends}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                  <defs>
+                    <linearGradient id="barFunded" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.9}/>
+                      <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0.5}/>
+                    </linearGradient>
+                    <linearGradient id="barNewDeals" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="hsl(var(--chart-1))" stopOpacity={0.9}/>
+                      <stop offset="95%" stopColor="hsl(var(--chart-1))" stopOpacity={0.5}/>
+                    </linearGradient>
+                    <linearGradient id="barRenewals" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="hsl(var(--chart-2))" stopOpacity={0.9}/>
+                      <stop offset="95%" stopColor="hsl(var(--chart-2))" stopOpacity={0.5}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.3} />
                   <XAxis 
                     dataKey="weekLabel" 
                     stroke="hsl(var(--muted-foreground))"
@@ -251,7 +276,8 @@ export function TrendCharts({ weeklyTrends, monthlyTrends }: TrendChartsProps) {
                   <Bar 
                     dataKey="totalFunded" 
                     name="Total Funded" 
-                    fill="hsl(var(--primary))" 
+                    fill="url(#barFunded)"
+                    radius={[6, 6, 0, 0]}
                   />
                 </BarChart>
               </ResponsiveContainer>
@@ -262,7 +288,17 @@ export function TrendCharts({ weeklyTrends, monthlyTrends }: TrendChartsProps) {
               <h4 className="text-sm font-semibold mb-4">Weekly New vs Renewal Mix</h4>
               <ResponsiveContainer width="100%" height={300}>
                 <BarChart data={weeklyTrends}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                  <defs>
+                    <linearGradient id="barNewDeals" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="hsl(var(--chart-1))" stopOpacity={0.9}/>
+                      <stop offset="95%" stopColor="hsl(var(--chart-1))" stopOpacity={0.5}/>
+                    </linearGradient>
+                    <linearGradient id="barRenewals" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="hsl(var(--chart-2))" stopOpacity={0.9}/>
+                      <stop offset="95%" stopColor="hsl(var(--chart-2))" stopOpacity={0.5}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.3} />
                   <XAxis 
                     dataKey="weekLabel" 
                     stroke="hsl(var(--muted-foreground))"
@@ -282,13 +318,14 @@ export function TrendCharts({ weeklyTrends, monthlyTrends }: TrendChartsProps) {
                     dataKey="newDealsFunded" 
                     name="New Deals" 
                     stackId="a"
-                    fill="hsl(var(--chart-1))" 
+                    fill="url(#barNewDeals)"
+                    radius={[6, 6, 0, 0]}
                   />
                   <Bar 
                     dataKey="renewalDealsFunded" 
                     name="Renewals" 
                     stackId="a"
-                    fill="hsl(var(--chart-2))" 
+                    fill="url(#barRenewals)"
                   />
                 </BarChart>
               </ResponsiveContainer>

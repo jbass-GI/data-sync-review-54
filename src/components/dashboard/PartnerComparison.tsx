@@ -37,12 +37,13 @@ import {
 
 interface PartnerComparisonProps {
   partners: PartnerMetrics[];
+  partnerMerges: Map<string, string[]>;
 }
 
 type RankingSortField = 'rank' | 'partner' | 'consistencyScore' | 'totalFunded' | 'totalFees' | 'avgFeePerDeal' | 'dealCount' | 'avgTicketSize' | 'avgFeePercent';
 type SortDirection = 'asc' | 'desc';
 
-export function PartnerComparison({ partners }: PartnerComparisonProps) {
+export function PartnerComparison({ partners, partnerMerges }: PartnerComparisonProps) {
   const [selectedPartner1, setSelectedPartner1] = useState<string>('');
   const [selectedPartner2, setSelectedPartner2] = useState<string>('');
   const [sortField, setSortField] = useState<RankingSortField>('rank');
@@ -274,16 +275,21 @@ export function PartnerComparison({ partners }: PartnerComparisonProps) {
                           <TooltipUI>
                             <TooltipTrigger asChild>
                               <div className="flex flex-col items-center gap-1 cursor-help">
-                                <div className="flex items-center gap-1">
-                                  <Zap className="h-4 w-4 text-warning" />
-                                  <span className={`text-sm font-semibold ${
-                                    partner.consistencyScore >= 70 ? 'text-success' :
-                                    partner.consistencyScore >= 40 ? 'text-warning' :
-                                    'text-muted-foreground'
-                                  }`}>
-                                    {partner.consistencyScore}
-                                  </span>
-                                </div>
+                    <div className="flex items-center justify-center gap-1">
+                      <Zap className="h-4 w-4 text-warning" />
+                      <span className={`text-sm font-semibold ${
+                        partner.consistencyScore >= 70 ? 'text-success' :
+                        partner.consistencyScore >= 40 ? 'text-warning' :
+                        'text-muted-foreground'
+                      }`}>
+                        {partner.consistencyScore}
+                      </span>
+                      {partnerMerges.has(partner.partner) && (
+                        <span className="text-xs text-muted-foreground ml-1">
+                          (merged)
+                        </span>
+                      )}
+                    </div>
                                 {partner.consecutiveBusinessDays !== undefined && partner.consecutiveBusinessDays > 0 && (
                                   <span className="text-xs text-muted-foreground">
                                     {partner.consecutiveBusinessDays}d streak
@@ -420,8 +426,8 @@ export function PartnerComparison({ partners }: PartnerComparisonProps) {
             {comparison && partner1Data && partner2Data ? (
               <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
                 {/* Performance Radar Chart */}
-                <div className="bg-card/30 rounded-lg p-6">
-                  <h4 className="text-sm font-semibold mb-4">Performance Comparison</h4>
+                <div className="bg-gradient-to-br from-card/50 via-primary/5 to-accent/5 rounded-lg p-6 border border-border/50">
+                  <h4 className="text-sm font-semibold mb-4 text-gradient">Performance Comparison</h4>
                   <div className="max-w-md mx-auto">
                     <ResponsiveContainer width="100%" height={300}>
                       <RadarChart data={radarData}>
