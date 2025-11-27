@@ -1,123 +1,186 @@
 import { Deal } from '@/types/dashboard';
-import { startOfMonth, format } from 'date-fns';
+import { eachDayOfInterval, isWeekend, format } from 'date-fns';
 
-interface MonthlyPartnerPerformance {
-  month: string;
-  partner: string;
-  totalFunded: number;
-  monthlyTarget: number;
-  metTarget: boolean;
+interface DealDay {
+  date: string;
+  deals: Deal[];
+  isBusinessDay: boolean;
+}
+
+interface ConsistencyMetrics {
+  consecutiveBusinessDaysWithDeals: number;
+  consecutiveNewDeals: number;
+  consecutiveRenewalDeals: number;
+  daysWithMultipleDeals: number;
+  consistencyScore: number;
 }
 
 /**
- * Calculate monthly performance for each partner
+ * Check if a date is a US bank holiday
  */
-export function calculateMonthlyPartnerPerformance(deals: Deal[]): MonthlyPartnerPerformance[] {
-  if (deals.length === 0) return [];
-
-  // Group deals by partner and month
-  const partnerMonthMap = new Map<string, Map<string, Deal[]>>();
-
-  deals.forEach(deal => {
-    const monthKey = format(startOfMonth(deal.fundingDate), 'yyyy-MM');
-    const partner = deal.partnerNormalized;
-
-    if (!partnerMonthMap.has(partner)) {
-      partnerMonthMap.set(partner, new Map());
-    }
-
-    const monthMap = partnerMonthMap.get(partner)!;
-    if (!monthMap.has(monthKey)) {
-      monthMap.set(monthKey, []);
-    }
-
-    monthMap.get(monthKey)!.push(deal);
-  });
-
-  // Calculate performance for each partner-month combination
-  const performances: MonthlyPartnerPerformance[] = [];
-
-  partnerMonthMap.forEach((monthMap, partner) => {
-    monthMap.forEach((monthDeals, monthKey) => {
-      const totalFunded = monthDeals.reduce((sum, deal) => sum + deal.fundedAmount, 0);
-      
-      // Calculate partner's proportional target based on their overall contribution
-      // For simplicity, we'll use a baseline target and compare against it
-      // In a real scenario, you might have partner-specific targets
-      const monthlyTarget = 30000000; // $30M monthly target
-      const totalPartners = partnerMonthMap.size;
-      const partnerTarget = monthlyTarget / totalPartners; // Distribute evenly for now
-      
-      performances.push({
-        month: monthKey,
-        partner,
-        totalFunded,
-        monthlyTarget: partnerTarget,
-        metTarget: totalFunded >= partnerTarget
-      });
-    });
-  });
-
-  // Sort by partner and month
-  return performances.sort((a, b) => {
-    if (a.partner !== b.partner) {
-      return a.partner.localeCompare(b.partner);
-    }
-    return a.month.localeCompare(b.month);
-  });
+function isUSBankHoliday(date: Date): boolean {
+  const year = date.getFullYear();
+  const month = date.getMonth();
+  const day = date.getDate();
+  
+  // Simple check for major holidays - can be expanded
+  const holidays = [
+    `${year}-01-01`, // New Year's Day
+    `${year}-07-04`, // Independence Day
+    `${year}-12-25`, // Christmas
+  ];
+  
+  const dateStr = format(date, 'yyyy-MM-dd');
+  return holidays.includes(dateStr);
 }
 
 /**
- * Calculate current streak for a partner
- * Returns positive number for win streaks, negative for loss streaks
+ * Calculate consecutive business days with deals
  */
-export function calculatePartnerStreak(
-  performances: MonthlyPartnerPerformance[],
-  partner: string
-): { currentStreak: number; streakType: 'win' | 'loss' | 'none' } {
-  const partnerPerformances = performances
-    .filter(p => p.partner === partner)
-    .sort((a, b) => b.month.localeCompare(a.month)); // Most recent first
-
-  if (partnerPerformances.length === 0) {
-    return { currentStreak: 0, streakType: 'none' };
-  }
-
-  const mostRecent = partnerPerformances[0];
-  const streakType = mostRecent.metTarget ? 'win' : 'loss';
-  let streakCount = 0;
-
-  // Count consecutive months with same result
-  for (const performance of partnerPerformances) {
-    if (performance.metTarget === mostRecent.metTarget) {
-      streakCount++;
+function calculateConsecutiveBusinessDays(dealDays: DealDay[]): number {
+  if (dealDays.length === 0) return 0;
+  
+  // Sort by date descending (most recent first)
+  const sorted = [...dealDays].sort((a, b) => b.date.localeCompare(a.date));
+  
+  let consecutiveDays = 0;
+  let expectedDate = new Date(sorted[0].date);
+  
+  for (const dealDay of sorted) {
+    const currentDate = new Date(dealDay.date);
+    
+    // Check if this is the expected business day
+    if (format(currentDate, 'yyyy-MM-dd') === format(expectedDate, 'yyyy-MM-dd')) {
+      if (dealDay.isBusinessDay && dealDay.deals.length > 0) {
+        consecutiveDays++;
+        
+        // Move to previous business day
+        do {
+          expectedDate.setDate(expectedDate.getDate() - 1);
+        } while (isWeekend(expectedDate) || isUSBankHoliday(expectedDate));
+      } else {
+        break;
+      }
     } else {
       break;
     }
   }
+  
+  return consecutiveDays;
+}
 
+/**
+ * Calculate consistency metrics for a partner
+ */
+export function calculateConsistencyMetrics(deals: Deal[]): ConsistencyMetrics {
+  if (deals.length === 0) {
+    return {
+      consecutiveBusinessDaysWithDeals: 0,
+      consecutiveNewDeals: 0,
+      consecutiveRenewalDeals: 0,
+      daysWithMultipleDeals: 0,
+      consistencyScore: 0
+    };
+  }
+  
+  // Sort deals by date (most recent first)
+  const sortedDeals = [...deals].sort((a, b) => 
+    b.fundingDate.getTime() - a.fundingDate.getTime()
+  );
+  
+  // Group deals by day
+  const dealsByDay = new Map<string, Deal[]>();
+  sortedDeals.forEach(deal => {
+    const dateKey = format(deal.fundingDate, 'yyyy-MM-dd');
+    if (!dealsByDay.has(dateKey)) {
+      dealsByDay.set(dateKey, []);
+    }
+    dealsByDay.get(dateKey)!.push(deal);
+  });
+  
+  // Create DealDay objects
+  const dealDays: DealDay[] = Array.from(dealsByDay.entries()).map(([date, deals]) => ({
+    date,
+    deals,
+    isBusinessDay: !isWeekend(new Date(date)) && !isUSBankHoliday(new Date(date))
+  }));
+  
+  // Calculate consecutive business days with deals
+  const consecutiveBusinessDaysWithDeals = calculateConsecutiveBusinessDays(dealDays);
+  
+  // Calculate consecutive new deals (most recent streak)
+  let consecutiveNewDeals = 0;
+  for (const deal of sortedDeals) {
+    const isNew = deal.dealType.toUpperCase().includes('NEW');
+    if (isNew) {
+      consecutiveNewDeals++;
+    } else {
+      break;
+    }
+  }
+  
+  // Calculate consecutive renewal deals (most recent streak)
+  let consecutiveRenewalDeals = 0;
+  for (const deal of sortedDeals) {
+    const isRenewal = deal.dealType.toUpperCase().includes('RENEW');
+    if (isRenewal) {
+      consecutiveRenewalDeals++;
+    } else {
+      break;
+    }
+  }
+  
+  // Count days with multiple deals
+  const daysWithMultipleDeals = Array.from(dealsByDay.values())
+    .filter(deals => deals.length >= 2).length;
+  
+  // Calculate consistency score (0-100)
+  // Weighted scoring: business day streak (40%), multiple deals days (30%), deal type streaks (30%)
+  const maxBusinessDayStreak = 20; // Assume max streak of 20 days for scoring
+  const maxMultipleDealDays = 10; // Assume max of 10 days for scoring
+  const maxDealTypeStreak = 10; // Assume max of 10 consecutive deals
+  
+  const businessDayScore = Math.min(consecutiveBusinessDaysWithDeals / maxBusinessDayStreak, 1) * 40;
+  const multipleDealScore = Math.min(daysWithMultipleDeals / maxMultipleDealDays, 1) * 30;
+  const dealTypeScore = Math.min(
+    Math.max(consecutiveNewDeals, consecutiveRenewalDeals) / maxDealTypeStreak, 
+    1
+  ) * 30;
+  
+  const consistencyScore = Math.round(businessDayScore + multipleDealScore + dealTypeScore);
+  
   return {
-    currentStreak: streakType === 'win' ? streakCount : -streakCount,
-    streakType
+    consecutiveBusinessDaysWithDeals,
+    consecutiveNewDeals,
+    consecutiveRenewalDeals,
+    daysWithMultipleDeals,
+    consistencyScore
   };
 }
 
 /**
- * Get all partner streaks
+ * Calculate consistency metrics for all partners
  */
-export function calculateAllPartnerStreaks(
+export function calculateAllPartnerConsistency(
   deals: Deal[]
-): Map<string, { currentStreak: number; streakType: 'win' | 'loss' | 'none' }> {
-  const performances = calculateMonthlyPartnerPerformance(deals);
-  const streaks = new Map<string, { currentStreak: number; streakType: 'win' | 'loss' | 'none' }>();
-
-  // Get unique partners
-  const partners = Array.from(new Set(performances.map(p => p.partner)));
-
-  partners.forEach(partner => {
-    const streak = calculatePartnerStreak(performances, partner);
-    streaks.set(partner, streak);
+): Map<string, ConsistencyMetrics> {
+  const partnerMap = new Map<string, Deal[]>();
+  
+  // Group deals by partner
+  deals.forEach(deal => {
+    const partner = deal.partnerNormalized;
+    if (!partnerMap.has(partner)) {
+      partnerMap.set(partner, []);
+    }
+    partnerMap.get(partner)!.push(deal);
   });
-
-  return streaks;
+  
+  // Calculate metrics for each partner
+  const metricsMap = new Map<string, ConsistencyMetrics>();
+  partnerMap.forEach((partnerDeals, partner) => {
+    const metrics = calculateConsistencyMetrics(partnerDeals);
+    metricsMap.set(partner, metrics);
+  });
+  
+  return metricsMap;
 }
