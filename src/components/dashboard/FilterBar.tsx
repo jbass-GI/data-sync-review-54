@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { 
   DashboardFilters, 
-  DATE_PRESETS, 
+  getDatePresets,
   CHANNEL_TYPES, 
   LIFECYCLE_TYPES, 
   TICKET_SIZE_BUCKETS 
@@ -27,6 +27,7 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { DateRangeFilter } from './DateRangeFilter';
 import { DateRange } from 'react-day-picker';
+import { Deal } from '@/types/dashboard';
 
 interface FilterBarProps {
   filters: DashboardFilters;
@@ -34,6 +35,7 @@ interface FilterBarProps {
   availablePartners: string[];
   availableMonths: string[];
   availableQuarters: string[];
+  deals: Deal[];
 }
 
 export function FilterBar({ 
@@ -41,9 +43,12 @@ export function FilterBar({
   onFiltersChange, 
   availablePartners,
   availableMonths,
-  availableQuarters 
+  availableQuarters,
+  deals
 }: FilterBarProps) {
   const [partnerSearch, setPartnerSearch] = useState('');
+  
+  const datePresets = getDatePresets(deals);
   
   const filteredPartners = availablePartners.filter(p => 
     p.toLowerCase().includes(partnerSearch.toLowerCase())
@@ -164,7 +169,7 @@ export function FilterBar({
                 <SelectValue placeholder="Select date range" />
               </SelectTrigger>
               <SelectContent className="bg-background z-50">
-                {DATE_PRESETS.map(preset => (
+                {datePresets.map(preset => (
                   <SelectItem key={preset.value} value={preset.value}>
                     {preset.label}
                   </SelectItem>
@@ -378,7 +383,7 @@ export function FilterBar({
             
             {filters.datePreset !== 'mtd' && filters.datePreset !== 'all' && (
               <Badge variant="secondary" className="gap-1">
-                {DATE_PRESETS.find(p => p.value === filters.datePreset)?.label || 'Custom'}
+                {datePresets.find(p => p.value === filters.datePreset)?.label || 'Custom'}
                 <X 
                   className="h-3 w-3 cursor-pointer" 
                   onClick={() => handleDatePresetChange('mtd')}

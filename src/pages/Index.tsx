@@ -220,6 +220,7 @@ const Index = () => {
           availablePartners={filterOptions.partners}
           availableMonths={filterOptions.months}
           availableQuarters={filterOptions.quarters}
+          deals={deals}
         />
       )}
 
