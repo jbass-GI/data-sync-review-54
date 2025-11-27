@@ -57,7 +57,7 @@ export function TrendCharts({ weeklyTrends, monthlyTrends }: TrendChartsProps) {
   };
 
   return (
-    <Card className="col-span-full">
+    <Card className="col-span-full" data-chart="trends">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <TrendingUp className="h-5 w-5 text-primary" />

@@ -12,7 +12,7 @@ export function DealTypeChart({ newDealsFunded, renewalDealsFunded }: DealTypeCh
   const renewalPercent = (renewalDealsFunded / total) * 100;
 
   return (
-    <Card className="p-6 border-border/50 bg-card/50 backdrop-blur">
+    <Card className="p-6 border-border/50 bg-card/50 backdrop-blur" data-chart="deal-type">
       <h2 className="text-xl font-bold mb-6">Deal Type Mix</h2>
       
       <div className="space-y-6">
