@@ -25,6 +25,7 @@ export interface PartnerMetrics {
   consecutiveNewDeals?: number; // Consecutive new deals streak
   consecutiveRenewalDeals?: number; // Consecutive renewal deals streak
   daysWithMultipleDeals?: number; // Days with 2+ deals
+  maxDealsInDay?: number; // Maximum deals in a single day
 }
 
 export interface DashboardMetrics {
