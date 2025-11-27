@@ -15,7 +15,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { Trophy, TrendingUp, Users, Target, Award, Crown, Zap } from 'lucide-react';
+import { Trophy, TrendingUp, Users, Target, Award, Crown, Zap, ArrowUpDown } from 'lucide-react';
 import { PartnerMetrics } from '@/types/dashboard';
 import { 
   calculatePartnerRankings, 
@@ -39,12 +39,60 @@ interface PartnerComparisonProps {
   partners: PartnerMetrics[];
 }
 
+type RankingSortField = 'rank' | 'partner' | 'consistencyScore' | 'totalFunded' | 'totalFees' | 'avgFeePerDeal' | 'dealCount' | 'avgTicketSize' | 'avgFeePercent';
+type SortDirection = 'asc' | 'desc';
+
 export function PartnerComparison({ partners }: PartnerComparisonProps) {
   const [selectedPartner1, setSelectedPartner1] = useState<string>('');
   const [selectedPartner2, setSelectedPartner2] = useState<string>('');
+  const [sortField, setSortField] = useState<RankingSortField>('rank');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
 
   const rankings = calculatePartnerRankings(partners);
-  const topPartners = rankings.slice(0, 10); // Show top 10 partners
+  
+  const handleSort = (field: RankingSortField) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection(field === 'rank' ? 'asc' : 'desc');
+    }
+  };
+
+  const sortedRankings = [...rankings].sort((a, b) => {
+    let aValue: number | string;
+    let bValue: number | string;
+
+    switch (sortField) {
+      case 'partner':
+        aValue = a.partner;
+        bValue = b.partner;
+        break;
+      case 'consistencyScore':
+        aValue = a.consistencyScore || 0;
+        bValue = b.consistencyScore || 0;
+        break;
+      case 'avgFeePerDeal':
+        aValue = a.dealCount > 0 ? a.totalFees / a.dealCount : 0;
+        bValue = b.dealCount > 0 ? b.totalFees / b.dealCount : 0;
+        break;
+      default:
+        aValue = a[sortField];
+        bValue = b[sortField];
+    }
+
+    if (typeof aValue === 'string' && typeof bValue === 'string') {
+      return sortDirection === 'asc' 
+        ? aValue.localeCompare(bValue)
+        : bValue.localeCompare(aValue);
+    }
+    
+    return sortDirection === 'asc'
+      ? (aValue as number) - (bValue as number)
+      : (bValue as number) - (aValue as number);
+  });
+
+  const topPartners = sortedRankings.slice(0, 10); // Show top 10 partners
 
   const partner1Data = partners.find(p => p.partner === selectedPartner1);
   const partner2Data = partners.find(p => p.partner === selectedPartner2);
@@ -117,15 +165,87 @@ export function PartnerComparison({ partners }: PartnerComparisonProps) {
             <table className="w-full">
               <thead>
                 <tr className="border-b border-border/50">
-                  <th className="text-left py-3 px-2 text-xs font-medium text-muted-foreground">Rank</th>
-                  <th className="text-left py-3 px-4 text-xs font-medium text-muted-foreground">Partner</th>
-                  <th className="text-center py-3 px-4 text-xs font-medium text-muted-foreground">Consistency</th>
-                  <th className="text-right py-3 px-4 text-xs font-medium text-muted-foreground">Total Funded</th>
-                  <th className="text-right py-3 px-4 text-xs font-medium text-muted-foreground">Total Fees</th>
-                  <th className="text-right py-3 px-4 text-xs font-medium text-muted-foreground">Avg Fee/Deal</th>
-                  <th className="text-center py-3 px-4 text-xs font-medium text-muted-foreground">Deals</th>
-                  <th className="text-right py-3 px-4 text-xs font-medium text-muted-foreground">Avg Ticket</th>
-                  <th className="text-right py-3 px-4 text-xs font-medium text-muted-foreground">Avg Fee %</th>
+                  <th 
+                    className="text-left py-3 px-2 text-xs font-medium text-muted-foreground cursor-pointer hover:text-foreground"
+                    onClick={() => handleSort('rank')}
+                  >
+                    <div className="flex items-center gap-1">
+                      Rank
+                      <ArrowUpDown className="w-3 h-3" />
+                    </div>
+                  </th>
+                  <th 
+                    className="text-left py-3 px-4 text-xs font-medium text-muted-foreground cursor-pointer hover:text-foreground"
+                    onClick={() => handleSort('partner')}
+                  >
+                    <div className="flex items-center gap-1">
+                      Partner
+                      <ArrowUpDown className="w-3 h-3" />
+                    </div>
+                  </th>
+                  <th 
+                    className="text-center py-3 px-4 text-xs font-medium text-muted-foreground cursor-pointer hover:text-foreground"
+                    onClick={() => handleSort('consistencyScore')}
+                  >
+                    <div className="flex items-center justify-center gap-1">
+                      Consistency
+                      <ArrowUpDown className="w-3 h-3" />
+                    </div>
+                  </th>
+                  <th 
+                    className="text-right py-3 px-4 text-xs font-medium text-muted-foreground cursor-pointer hover:text-foreground"
+                    onClick={() => handleSort('totalFunded')}
+                  >
+                    <div className="flex items-center justify-end gap-1">
+                      Total Funded
+                      <ArrowUpDown className="w-3 h-3" />
+                    </div>
+                  </th>
+                  <th 
+                    className="text-right py-3 px-4 text-xs font-medium text-muted-foreground cursor-pointer hover:text-foreground"
+                    onClick={() => handleSort('totalFees')}
+                  >
+                    <div className="flex items-center justify-end gap-1">
+                      Total Fees
+                      <ArrowUpDown className="w-3 h-3" />
+                    </div>
+                  </th>
+                  <th 
+                    className="text-right py-3 px-4 text-xs font-medium text-muted-foreground cursor-pointer hover:text-foreground"
+                    onClick={() => handleSort('avgFeePerDeal')}
+                  >
+                    <div className="flex items-center justify-end gap-1">
+                      Avg Fee/Deal
+                      <ArrowUpDown className="w-3 h-3" />
+                    </div>
+                  </th>
+                  <th 
+                    className="text-center py-3 px-4 text-xs font-medium text-muted-foreground cursor-pointer hover:text-foreground"
+                    onClick={() => handleSort('dealCount')}
+                  >
+                    <div className="flex items-center justify-center gap-1">
+                      Deals
+                      <ArrowUpDown className="w-3 h-3" />
+                    </div>
+                  </th>
+                  <th 
+                    className="text-right py-3 px-4 text-xs font-medium text-muted-foreground cursor-pointer hover:text-foreground"
+                    onClick={() => handleSort('avgTicketSize')}
+                  >
+                    <div className="flex items-center justify-end gap-1">
+                      Avg Ticket
+                      <ArrowUpDown className="w-3 h-3" />
+                    </div>
+                  </th>
+                  <th 
+                    className="text-right py-3 px-4 text-xs font-medium text-muted-foreground cursor-pointer hover:text-foreground"
+                    onClick={() => handleSort('avgFeePercent')}
+                  >
+                    <div className="flex items-center justify-end gap-1">
+                      Avg Fee %
+                      <ArrowUpDown className="w-3 h-3" />
+                    </div>
+                  </th>
                   <th className="text-center py-3 px-4 text-xs font-medium text-muted-foreground">New/Renewal</th>
                 </tr>
               </thead>
