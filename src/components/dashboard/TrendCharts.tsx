@@ -117,6 +117,7 @@ export function TrendCharts({ weeklyTrends, monthlyTrends }: TrendChartsProps) {
                     strokeWidth={2}
                     strokeDasharray="5 5"
                     fill="url(#colorTarget)"
+                    activeDot={false}
                   />
                   <Area
                     type="monotone"
@@ -125,6 +126,7 @@ export function TrendCharts({ weeklyTrends, monthlyTrends }: TrendChartsProps) {
                     stroke="hsl(var(--primary))"
                     strokeWidth={2}
                     fill="url(#colorFunded)"
+                    activeDot={false}
                   />
                 </AreaChart>
               </ResponsiveContainer>
@@ -164,12 +166,14 @@ export function TrendCharts({ weeklyTrends, monthlyTrends }: TrendChartsProps) {
                     stackId="a"
                     fill="url(#barNewDeals)"
                     radius={[6, 6, 0, 0]}
+                    activeBar={false}
                   />
                   <Bar 
                     dataKey="renewalDealsFunded" 
                     name="Renewals" 
                     stackId="a"
                     fill="url(#barRenewals)"
+                    activeBar={false}
                   />
                 </BarChart>
               </ResponsiveContainer>
@@ -200,6 +204,7 @@ export function TrendCharts({ weeklyTrends, monthlyTrends }: TrendChartsProps) {
                       stroke="hsl(var(--chart-3))"
                       strokeWidth={2}
                       dot={{ r: 4 }}
+                      activeDot={false}
                     />
                   </LineChart>
                 </ResponsiveContainer>
@@ -229,6 +234,7 @@ export function TrendCharts({ weeklyTrends, monthlyTrends }: TrendChartsProps) {
                       stroke="hsl(var(--chart-4))"
                       strokeWidth={2}
                       dot={{ r: 4 }}
+                      activeDot={false}
                     />
                   </LineChart>
                 </ResponsiveContainer>
@@ -278,6 +284,7 @@ export function TrendCharts({ weeklyTrends, monthlyTrends }: TrendChartsProps) {
                     name="Total Funded" 
                     fill="url(#barFunded)"
                     radius={[6, 6, 0, 0]}
+                    activeBar={false}
                   />
                 </BarChart>
               </ResponsiveContainer>
@@ -320,12 +327,14 @@ export function TrendCharts({ weeklyTrends, monthlyTrends }: TrendChartsProps) {
                     stackId="a"
                     fill="url(#barNewDeals)"
                     radius={[6, 6, 0, 0]}
+                    activeBar={false}
                   />
                   <Bar 
                     dataKey="renewalDealsFunded" 
                     name="Renewals" 
                     stackId="a"
                     fill="url(#barRenewals)"
+                    activeBar={false}
                   />
                 </BarChart>
               </ResponsiveContainer>
@@ -355,7 +364,8 @@ export function TrendCharts({ weeklyTrends, monthlyTrends }: TrendChartsProps) {
                     <Bar 
                       dataKey="dealCount" 
                       name="Deal Count" 
-                      fill="hsl(var(--chart-3))" 
+                      fill="hsl(var(--chart-3))"
+                      activeBar={false}
                     />
                   </BarChart>
                 </ResponsiveContainer>
@@ -384,7 +394,8 @@ export function TrendCharts({ weeklyTrends, monthlyTrends }: TrendChartsProps) {
                     <Bar 
                       dataKey="avgTicket" 
                       name="Avg Ticket" 
-                      fill="hsl(var(--chart-4))" 
+                      fill="hsl(var(--chart-4))"
+                      activeBar={false}
                     />
                   </BarChart>
                 </ResponsiveContainer>

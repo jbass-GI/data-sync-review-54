@@ -448,6 +448,7 @@ export function PartnerComparison({ partners, partnerMerges }: PartnerComparison
                           fill="hsl(var(--chart-1))"
                           fillOpacity={0.3}
                           strokeWidth={2}
+                          activeDot={false}
                         />
                         <Radar
                           name={selectedPartner2}
@@ -456,6 +457,7 @@ export function PartnerComparison({ partners, partnerMerges }: PartnerComparison
                           fill="hsl(var(--chart-2))"
                           fillOpacity={0.3}
                           strokeWidth={2}
+                          activeDot={false}
                         />
                         <Legend />
                         <Tooltip content={<CustomRadarTooltip />} />
