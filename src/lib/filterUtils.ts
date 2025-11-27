@@ -1,5 +1,5 @@
 import { Deal } from '@/types/dashboard';
-import { startOfMonth, endOfMonth, startOfQuarter, endOfQuarter, startOfYear, subDays, subMonths, subQuarters } from 'date-fns';
+import { startOfMonth, endOfMonth, startOfQuarter, endOfQuarter, startOfYear, endOfYear, subDays, subMonths, subQuarters } from 'date-fns';
 
 export interface DashboardFilters {
   datePreset: string;
@@ -23,13 +23,61 @@ export const DATE_PRESETS = [
   { value: 'ytd', label: 'YTD (Year-to-Date)' },
   { value: 'lastMonth', label: 'Last Month' },
   { value: 'lastQuarter', label: 'Last Quarter' },
+  { value: 'lastYear', label: 'Last Year' },
+  { value: 'last12months', label: 'Last 12 Months' },
   { value: 'custom', label: 'Custom Range' }
 ];
+
+/**
+ * Get available years from deals
+ */
+export function getAvailableYears(deals: Deal[]): number[] {
+  if (deals.length === 0) return [];
+  
+  const years = new Set<number>();
+  deals.forEach(deal => {
+    years.add(deal.fundingDate.getFullYear());
+  });
+  
+  return Array.from(years).sort((a, b) => b - a); // Most recent first
+}
+
+/**
+ * Get date presets dynamically based on available data
+ */
+export function getDatePresets(deals: Deal[]): typeof DATE_PRESETS {
+  const basePresets = [...DATE_PRESETS];
+  const years = getAvailableYears(deals);
+  
+  // If data spans multiple years, add year options
+  if (years.length > 1) {
+    const yearPresets = years.map(year => ({
+      value: `year-${year}`,
+      label: `${year}`
+    }));
+    
+    // Insert year presets before "custom"
+    const customIndex = basePresets.findIndex(p => p.value === 'custom');
+    basePresets.splice(customIndex, 0, ...yearPresets);
+  }
+  
+  return basePresets;
+}
 
 /**
  * Get display labels based on filter preset
  */
 export function getFilterDisplayLabels(preset: string) {
+  // Handle year presets
+  if (preset.startsWith('year-')) {
+    const year = preset.replace('year-', '');
+    return {
+      fundedLabel: `Total Funded (${year})`,
+      dealsLabel: `Closed in ${year}`,
+      targetLabel: `${year} Annual Target Progress`
+    };
+  }
+  
   switch (preset) {
     case 'mtd':
       return {
@@ -60,6 +108,18 @@ export function getFilterDisplayLabels(preset: string) {
         fundedLabel: 'Total Funded (Last Quarter)',
         dealsLabel: 'Closed last quarter',
         targetLabel: 'Quarterly Target Progress'
+      };
+    case 'lastYear':
+      return {
+        fundedLabel: 'Total Funded (Last Year)',
+        dealsLabel: 'Closed last year',
+        targetLabel: 'Annual Target Progress'
+      };
+    case 'last12months':
+      return {
+        fundedLabel: 'Total Funded (Last 12 Months)',
+        dealsLabel: 'Closed in last 12 months',
+        targetLabel: 'Annual Target Progress'
       };
     case 'today':
       return {
@@ -129,6 +189,15 @@ export function getDateRangeFromPreset(preset: string, deals?: Deal[]): { from: 
     referenceDate = new Date(Math.max(...dealDates.map(d => d.getTime())));
   }
   
+  // Handle year presets (e.g., "year-2024")
+  if (preset.startsWith('year-')) {
+    const year = parseInt(preset.replace('year-', ''));
+    return {
+      from: new Date(year, 0, 1), // January 1st
+      to: new Date(year, 11, 31, 23, 59, 59) // December 31st
+    };
+  }
+  
   switch (preset) {
     case 'today':
       return { from: referenceDate, to: referenceDate };
@@ -159,6 +228,13 @@ export function getDateRangeFromPreset(preset: string, deals?: Deal[]): { from: 
     case 'lastQuarter':
       const lastQuarter = subQuarters(referenceDate, 1);
       return { from: startOfQuarter(lastQuarter), to: endOfQuarter(lastQuarter) };
+    
+    case 'lastYear':
+      const lastYearDate = new Date(referenceDate.getFullYear() - 1, 0, 1);
+      return { from: startOfYear(lastYearDate), to: endOfYear(lastYearDate) };
+    
+    case 'last12months':
+      return { from: subMonths(referenceDate, 12), to: referenceDate };
     
     default:
       return { from: startOfMonth(referenceDate), to: referenceDate };
