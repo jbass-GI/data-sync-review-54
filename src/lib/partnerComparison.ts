@@ -66,6 +66,7 @@ export function comparePartners(
 
   // Total Funded
   const fundedDiff = partner1.totalFunded - partner2.totalFunded;
+  const fundedLoserValue = fundedDiff > 0 ? partner2.totalFunded : partner1.totalFunded;
   metrics.push({
     label: 'Total Funded',
     partner1Value: partner1.totalFunded,
@@ -74,13 +75,14 @@ export function comparePartners(
     partner2Display: formatCurrency(partner2.totalFunded),
     winner: fundedDiff > 0 ? 'partner1' : fundedDiff < 0 ? 'partner2' : 'tie',
     difference: Math.abs(fundedDiff),
-    differencePercent: partner2.totalFunded > 0 
-      ? (Math.abs(fundedDiff) / partner2.totalFunded) * 100 
+    differencePercent: fundedLoserValue > 0 
+      ? (Math.abs(fundedDiff) / fundedLoserValue) * 100 
       : 0
   });
 
   // Total Fees
   const feesDiff = partner1.totalFees - partner2.totalFees;
+  const feesLoserValue = feesDiff > 0 ? partner2.totalFees : partner1.totalFees;
   metrics.push({
     label: 'Total Fees',
     partner1Value: partner1.totalFees,
@@ -89,13 +91,14 @@ export function comparePartners(
     partner2Display: formatCurrency(partner2.totalFees),
     winner: feesDiff > 0 ? 'partner1' : feesDiff < 0 ? 'partner2' : 'tie',
     difference: Math.abs(feesDiff),
-    differencePercent: partner2.totalFees > 0 
-      ? (Math.abs(feesDiff) / partner2.totalFees) * 100 
+    differencePercent: feesLoserValue > 0 
+      ? (Math.abs(feesDiff) / feesLoserValue) * 100 
       : 0
   });
 
   // Deal Count
   const dealCountDiff = partner1.dealCount - partner2.dealCount;
+  const dealCountLoserValue = dealCountDiff > 0 ? partner2.dealCount : partner1.dealCount;
   metrics.push({
     label: 'Deal Count',
     partner1Value: partner1.dealCount,
@@ -104,13 +107,14 @@ export function comparePartners(
     partner2Display: partner2.dealCount.toString(),
     winner: dealCountDiff > 0 ? 'partner1' : dealCountDiff < 0 ? 'partner2' : 'tie',
     difference: Math.abs(dealCountDiff),
-    differencePercent: partner2.dealCount > 0 
-      ? (Math.abs(dealCountDiff) / partner2.dealCount) * 100 
+    differencePercent: dealCountLoserValue > 0 
+      ? (Math.abs(dealCountDiff) / dealCountLoserValue) * 100 
       : 0
   });
 
   // Average Ticket Size
   const avgTicketDiff = partner1.avgTicketSize - partner2.avgTicketSize;
+  const avgTicketLoserValue = avgTicketDiff > 0 ? partner2.avgTicketSize : partner1.avgTicketSize;
   metrics.push({
     label: 'Avg Ticket Size',
     partner1Value: partner1.avgTicketSize,
@@ -119,13 +123,14 @@ export function comparePartners(
     partner2Display: formatCurrency(partner2.avgTicketSize),
     winner: avgTicketDiff > 0 ? 'partner1' : avgTicketDiff < 0 ? 'partner2' : 'tie',
     difference: Math.abs(avgTicketDiff),
-    differencePercent: partner2.avgTicketSize > 0 
-      ? (Math.abs(avgTicketDiff) / partner2.avgTicketSize) * 100 
+    differencePercent: avgTicketLoserValue > 0 
+      ? (Math.abs(avgTicketDiff) / avgTicketLoserValue) * 100 
       : 0
   });
 
   // Average Fee Percent
   const avgFeeDiff = partner1.avgFeePercent - partner2.avgFeePercent;
+  const avgFeeLoserValue = avgFeeDiff > 0 ? partner2.avgFeePercent : partner1.avgFeePercent;
   metrics.push({
     label: 'Avg Fee %',
     partner1Value: partner1.avgFeePercent,
@@ -134,13 +139,14 @@ export function comparePartners(
     partner2Display: `${partner2.avgFeePercent.toFixed(2)}%`,
     winner: avgFeeDiff > 0 ? 'partner1' : avgFeeDiff < 0 ? 'partner2' : 'tie',
     difference: Math.abs(avgFeeDiff),
-    differencePercent: partner2.avgFeePercent > 0 
-      ? (Math.abs(avgFeeDiff) / partner2.avgFeePercent) * 100 
+    differencePercent: avgFeeLoserValue > 0 
+      ? (Math.abs(avgFeeDiff) / avgFeeLoserValue) * 100 
       : 0
   });
 
   // New Deals Count
   const newDealsDiff = partner1.newDealsCount - partner2.newDealsCount;
+  const newDealsLoserValue = newDealsDiff > 0 ? partner2.newDealsCount : partner1.newDealsCount;
   metrics.push({
     label: 'New Deals',
     partner1Value: partner1.newDealsCount,
@@ -149,13 +155,14 @@ export function comparePartners(
     partner2Display: partner2.newDealsCount.toString(),
     winner: newDealsDiff > 0 ? 'partner1' : newDealsDiff < 0 ? 'partner2' : 'tie',
     difference: Math.abs(newDealsDiff),
-    differencePercent: partner2.newDealsCount > 0 
-      ? (Math.abs(newDealsDiff) / partner2.newDealsCount) * 100 
+    differencePercent: newDealsLoserValue > 0 
+      ? (Math.abs(newDealsDiff) / newDealsLoserValue) * 100 
       : 0
   });
 
   // Renewal Deals Count
   const renewalDealsDiff = partner1.renewalDealsCount - partner2.renewalDealsCount;
+  const renewalDealsLoserValue = renewalDealsDiff > 0 ? partner2.renewalDealsCount : partner1.renewalDealsCount;
   metrics.push({
     label: 'Renewals',
     partner1Value: partner1.renewalDealsCount,
@@ -164,8 +171,8 @@ export function comparePartners(
     partner2Display: partner2.renewalDealsCount.toString(),
     winner: renewalDealsDiff > 0 ? 'partner1' : renewalDealsDiff < 0 ? 'partner2' : 'tie',
     difference: Math.abs(renewalDealsDiff),
-    differencePercent: partner2.renewalDealsCount > 0 
-      ? (Math.abs(renewalDealsDiff) / partner2.renewalDealsCount) * 100 
+    differencePercent: renewalDealsLoserValue > 0 
+      ? (Math.abs(renewalDealsDiff) / renewalDealsLoserValue) * 100 
       : 0
   });
 
