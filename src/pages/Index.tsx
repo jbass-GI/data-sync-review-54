@@ -16,6 +16,7 @@ import { applyFilters, getFilterOptions, DashboardFilters, getDateRangeFromPrese
 import { calculateMTDMetrics } from '@/lib/mtdProjections';
 import { calculateWeeklyTrends, calculateMonthlyTrends } from '@/lib/trendAnalysis';
 import { Deal } from '@/types/dashboard';
+import glazerLogo from '@/assets/glazer-logo.png';
 
 const Index = () => {
   const [deals, setDeals] = useState<Deal[]>([]);
@@ -85,18 +86,20 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      {/* Header */}
-      {/* Header */}
       <header className="border-b border-border/50 bg-card/30 backdrop-blur">
         <div className="container mx-auto px-6 py-6">
           <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-gradient">
-                Glazer Investments
-              </h1>
-              <p className="text-sm text-muted-foreground mt-1">
-                MCA Production Dashboard
-              </p>
+            <div className="flex items-center gap-4">
+              <img 
+                src={glazerLogo} 
+                alt="Glazer Investments" 
+                className="h-12 w-auto"
+              />
+              <div className="border-l border-border/50 pl-4">
+                <p className="text-sm font-medium text-muted-foreground">
+                  MCA Production Dashboard
+                </p>
+              </div>
             </div>
             <div className="flex items-center gap-4">
               {deals.length > 0 && (
