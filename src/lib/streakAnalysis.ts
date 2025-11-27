@@ -153,23 +153,30 @@ export function calculateConsistencyMetrics(deals: Deal[]): ConsistencyMetrics {
   const daysWithMultipleDeals = Array.from(dealsByDay.values())
     .filter(deals => deals.length >= 2).length;
   
+  // Calculate average deals per funding day (volume intensity)
+  const totalFundingDays = dealsByDay.size;
+  const avgDealsPerDay = deals.length / totalFundingDays;
+  
   // Calculate consistency score (0-100)
-  // Weighted scoring prioritizes regular funding consistency over volume:
-  // - Funding day streak (60%): Most important - shows up regularly
-  // - Deal type consistency (25%): Shows pattern/specialization 
-  // - Multiple deal days (15%): Volume indicator (lower weight)
+  // Weighted scoring balances regularity with volume intensity:
+  // - Funding day streak (45%): Shows consistent regular activity
+  // - Multiple deal days (30%): Rewards high-volume days
+  // - Deal type consistency (15%): Shows pattern/specialization
+  // - Deals per day ratio (10%): Overall volume intensity
   const maxBusinessDayStreak = 20; // Assume max streak of 20 days for scoring
   const maxMultipleDealDays = 10; // Assume max of 10 days for scoring
   const maxDealTypeStreak = 10; // Assume max of 10 consecutive deals
+  const maxAvgDealsPerDay = 3; // Assume max avg of 3 deals/day for scoring
   
-  const businessDayScore = Math.min(consecutiveBusinessDaysWithDeals / maxBusinessDayStreak, 1) * 60;
-  const multipleDealScore = Math.min(daysWithMultipleDeals / maxMultipleDealDays, 1) * 15;
+  const businessDayScore = Math.min(consecutiveBusinessDaysWithDeals / maxBusinessDayStreak, 1) * 45;
+  const multipleDealScore = Math.min(daysWithMultipleDeals / maxMultipleDealDays, 1) * 30;
   const dealTypeScore = Math.min(
     Math.max(consecutiveNewDeals, consecutiveRenewalDeals) / maxDealTypeStreak, 
     1
-  ) * 25;
+  ) * 15;
+  const volumeIntensityScore = Math.min(avgDealsPerDay / maxAvgDealsPerDay, 1) * 10;
   
-  const consistencyScore = Math.round(businessDayScore + multipleDealScore + dealTypeScore);
+  const consistencyScore = Math.round(businessDayScore + multipleDealScore + dealTypeScore + volumeIntensityScore);
   
   return {
     consecutiveBusinessDaysWithDeals,
