@@ -8,6 +8,7 @@ import { FileUpload } from '@/components/dashboard/FileUpload';
 import { FilterBar } from '@/components/dashboard/FilterBar';
 import { MTDTracking } from '@/components/dashboard/MTDTracking';
 import { TrendCharts } from '@/components/dashboard/TrendCharts';
+import { PartnerComparison } from '@/components/dashboard/PartnerComparison';
 import { parseExcelFile } from '@/lib/parseExcel';
 import { calculateDashboardMetrics, calculatePartnerMetrics, formatCurrency, formatPercent } from '@/lib/dashboardMetrics';
 import { applyFilters, getFilterOptions, DashboardFilters, getDateRangeFromPreset } from '@/lib/filterUtils';
@@ -181,6 +182,11 @@ const Index = () => {
 
             {/* Partner Table */}
             <PartnerTable partners={partnerMetrics} />
+
+            {/* Partner Comparison */}
+            {partnerMetrics.length >= 2 && (
+              <PartnerComparison partners={partnerMetrics} />
+            )}
 
             {/* Upload New File */}
             <div className="pt-4">
