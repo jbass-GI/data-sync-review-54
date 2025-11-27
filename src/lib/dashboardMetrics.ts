@@ -10,11 +10,19 @@ export function calculateDashboardMetrics(deals: Deal[], dateRange?: { from: Dat
   const avgTicketSize = dealCount > 0 ? totalFunded / dealCount : 0;
   const avgFeePercent = totalFunded > 0 ? (totalFees / totalFunded) * 100 : 0;
   
-  // Fixed monthly target - always $30M regardless of date range
+  // Calculate appropriate target based on date range
   const annualTarget = 360000000; // $360M annual target
-  const monthlyTarget = annualTarget / 12; // Fixed $30M monthly target
+  const monthlyTarget = annualTarget / 12; // $30M monthly target
   
-  const targetProgress = monthlyTarget > 0 ? (totalFunded / monthlyTarget) * 100 : 0;
+  let targetAmount = monthlyTarget;
+  if (dateRange?.from && dateRange?.to) {
+    // Calculate number of days in range
+    const daysInRange = differenceInDays(dateRange.to, dateRange.from) + 1;
+    const monthsInRange = daysInRange / 30; // Approximate months
+    targetAmount = monthlyTarget * monthsInRange;
+  }
+  
+  const targetProgress = targetAmount > 0 ? (totalFunded / targetAmount) * 100 : 0;
   
   const newDeals = deals.filter(d => isDealTypeNew(d.dealType));
   const renewalDeals = deals.filter(d => !isDealTypeNew(d.dealType));
@@ -28,7 +36,7 @@ export function calculateDashboardMetrics(deals: Deal[], dateRange?: { from: Dat
     dealCount,
     avgTicketSize,
     avgFeePercent,
-    monthlyTarget,
+    monthlyTarget: targetAmount,
     targetProgress,
     newDealsFunded,
     renewalDealsFunded

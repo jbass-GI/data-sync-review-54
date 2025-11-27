@@ -26,6 +26,86 @@ export const DATE_PRESETS = [
   { value: 'custom', label: 'Custom Range' }
 ];
 
+/**
+ * Get display labels based on filter preset
+ */
+export function getFilterDisplayLabels(preset: string) {
+  switch (preset) {
+    case 'mtd':
+      return {
+        fundedLabel: 'Total Funded (MTD)',
+        dealsLabel: 'Closed this month',
+        targetLabel: 'Monthly Target Progress'
+      };
+    case 'qtd':
+      return {
+        fundedLabel: 'Total Funded (QTD)',
+        dealsLabel: 'Closed this quarter',
+        targetLabel: 'Quarterly Target Progress'
+      };
+    case 'ytd':
+      return {
+        fundedLabel: 'Total Funded (YTD)',
+        dealsLabel: 'Closed this year',
+        targetLabel: 'Annual Target Progress'
+      };
+    case 'lastMonth':
+      return {
+        fundedLabel: 'Total Funded (Last Month)',
+        dealsLabel: 'Closed last month',
+        targetLabel: 'Monthly Target Progress'
+      };
+    case 'lastQuarter':
+      return {
+        fundedLabel: 'Total Funded (Last Quarter)',
+        dealsLabel: 'Closed last quarter',
+        targetLabel: 'Quarterly Target Progress'
+      };
+    case 'today':
+      return {
+        fundedLabel: 'Total Funded (Today)',
+        dealsLabel: 'Closed today',
+        targetLabel: 'Daily Target Progress'
+      };
+    case 'yesterday':
+      return {
+        fundedLabel: 'Total Funded (Yesterday)',
+        dealsLabel: 'Closed yesterday',
+        targetLabel: 'Daily Target Progress'
+      };
+    case 'last7':
+      return {
+        fundedLabel: 'Total Funded (Last 7 Days)',
+        dealsLabel: 'Closed in period',
+        targetLabel: 'Period Target Progress'
+      };
+    case 'last30':
+      return {
+        fundedLabel: 'Total Funded (Last 30 Days)',
+        dealsLabel: 'Closed in period',
+        targetLabel: 'Period Target Progress'
+      };
+    case 'custom':
+      return {
+        fundedLabel: 'Total Funded (Custom Range)',
+        dealsLabel: 'Closed in period',
+        targetLabel: 'Period Target Progress'
+      };
+    case 'all':
+      return {
+        fundedLabel: 'Total Funded (All Time)',
+        dealsLabel: 'Total deals closed',
+        targetLabel: 'Target Progress'
+      };
+    default:
+      return {
+        fundedLabel: 'Total Funded',
+        dealsLabel: 'Deals closed',
+        targetLabel: 'Target Progress'
+      };
+  }
+}
+
 export const CHANNEL_TYPES = ['Direct', 'ISO'];
 
 export const LIFECYCLE_TYPES = ['New', 'Renewal', 'New - Add On', 'New - PIF', 'Other'];
