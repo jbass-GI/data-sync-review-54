@@ -134,12 +134,6 @@ export function PartnerComparison({ partners }: PartnerComparisonProps) {
                     {formatCurrency(partner.totalFees)} fees • {formatPercent(partner.avgFeePercent)} avg
                   </p>
                 </div>
-
-                <div className="text-right">
-                  <div className="text-lg font-bold text-primary">
-                    Top {Math.round(partner.percentileRank)}%
-                  </div>
-                </div>
               </div>
             ))}
           </div>
