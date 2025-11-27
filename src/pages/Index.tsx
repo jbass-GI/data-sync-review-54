@@ -66,10 +66,10 @@ const Index = () => {
     if (filters.datePreset === 'custom' && filters.customDateRange) {
       return filters.customDateRange;
     } else if (filters.datePreset !== 'all') {
-      return getDateRangeFromPreset(filters.datePreset);
+      return getDateRangeFromPreset(filters.datePreset, deals);
     }
     return undefined;
-  }, [filters]);
+  }, [filters, deals]);
 
   const metrics = filteredDeals.length > 0 ? calculateDashboardMetrics(filteredDeals, dateRangeForMetrics) : null;
   const partnerMetrics = filteredDeals.length > 0 ? calculatePartnerMetrics(filteredDeals) : [];
