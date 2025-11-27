@@ -154,17 +154,20 @@ export function calculateConsistencyMetrics(deals: Deal[]): ConsistencyMetrics {
     .filter(deals => deals.length >= 2).length;
   
   // Calculate consistency score (0-100)
-  // Weighted scoring: business day streak (40%), multiple deals days (30%), deal type streaks (30%)
+  // Weighted scoring prioritizes regular funding consistency over volume:
+  // - Funding day streak (60%): Most important - shows up regularly
+  // - Deal type consistency (25%): Shows pattern/specialization 
+  // - Multiple deal days (15%): Volume indicator (lower weight)
   const maxBusinessDayStreak = 20; // Assume max streak of 20 days for scoring
   const maxMultipleDealDays = 10; // Assume max of 10 days for scoring
   const maxDealTypeStreak = 10; // Assume max of 10 consecutive deals
   
-  const businessDayScore = Math.min(consecutiveBusinessDaysWithDeals / maxBusinessDayStreak, 1) * 40;
-  const multipleDealScore = Math.min(daysWithMultipleDeals / maxMultipleDealDays, 1) * 30;
+  const businessDayScore = Math.min(consecutiveBusinessDaysWithDeals / maxBusinessDayStreak, 1) * 60;
+  const multipleDealScore = Math.min(daysWithMultipleDeals / maxMultipleDealDays, 1) * 15;
   const dealTypeScore = Math.min(
     Math.max(consecutiveNewDeals, consecutiveRenewalDeals) / maxDealTypeStreak, 
     1
-  ) * 30;
+  ) * 25;
   
   const consistencyScore = Math.round(businessDayScore + multipleDealScore + dealTypeScore);
   
