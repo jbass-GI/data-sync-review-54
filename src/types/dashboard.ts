@@ -22,6 +22,9 @@ export interface PartnerMetrics {
   renewalDealsCount: number;
   consistencyScore?: number; // 0-100 score based on deal patterns
   consecutiveBusinessDays?: number; // Consecutive business days with deals
+  consecutiveNewDeals?: number; // Consecutive new deals streak
+  consecutiveRenewalDeals?: number; // Consecutive renewal deals streak
+  daysWithMultipleDeals?: number; // Days with 2+ deals
 }
 
 export interface DashboardMetrics {
