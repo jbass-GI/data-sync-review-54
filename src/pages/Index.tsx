@@ -309,11 +309,18 @@ const Index = () => {
                 />
               )}
               <div className="text-right border-l border-border/50 pl-4">
-                <p className="text-sm font-medium text-foreground">January 2025</p>
-                <p className="text-xs text-accent mt-1 flex items-center justify-end gap-1">
-                  <span className="inline-block w-2 h-2 rounded-full bg-success animate-pulse" />
-                  Live Updates
-                </p>
+                {deals.length > 0 ? (
+                  <>
+                    <p className="text-sm font-medium text-foreground">
+                      Last Funded: {new Date(Math.max(...deals.map(d => d.fundingDate.getTime()))).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {deals.length} deals loaded
+                    </p>
+                  </>
+                ) : (
+                  <p className="text-sm text-muted-foreground">No data loaded</p>
+                )}
               </div>
             </div>
           </div>
