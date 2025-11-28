@@ -38,7 +38,7 @@ const Index = () => {
   }, [deals]);
   
   const [filters, setFilters] = useState<DashboardFilters>({
-    datePreset: 'mtd',
+    datePreset: 'all', // Will be updated based on data when loaded
     dealType: 'all',
     partners: [],
     channelTypes: [],
@@ -81,13 +81,20 @@ const Index = () => {
         if (defaultDeals.length > 0) {
           setDeals(defaultDeals);
           
+          // Determine best initial preset based on data
           const now = new Date();
           const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
           const hasMTD = defaultDeals.some(deal => deal.fundingDate >= monthStart && deal.fundingDate <= now);
           
+          // Get most recent month from data
+          const dealDates = defaultDeals.map(d => d.fundingDate);
+          const maxDate = new Date(Math.max(...dealDates.map(d => d.getTime())));
+          const mostRecentMonth = `month-${maxDate.getFullYear()}-${String(maxDate.getMonth() + 1).padStart(2, '0')}`;
+          
           setFilters(prev => ({
             ...prev,
-            datePreset: hasMTD ? 'mtd' : 'all'
+            // Use MTD if current data, otherwise default to most recent month or all
+            datePreset: hasMTD ? 'mtd' : mostRecentMonth
           }));
           
           toast({
@@ -129,12 +136,18 @@ const Index = () => {
       } else {
         setDeals(parsedDeals);
         
+        // Determine best initial preset based on data
         const now = new Date();
         const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
         const hasMTD = parsedDeals.some(deal => deal.fundingDate >= monthStart && deal.fundingDate <= now);
         
+        // Get most recent month from data
+        const dealDates = parsedDeals.map(d => d.fundingDate);
+        const maxDate = new Date(Math.max(...dealDates.map(d => d.getTime())));
+        const mostRecentMonth = `month-${maxDate.getFullYear()}-${String(maxDate.getMonth() + 1).padStart(2, '0')}`;
+        
         setFilters({
-          datePreset: hasMTD ? 'mtd' : 'all',
+          datePreset: hasMTD ? 'mtd' : mostRecentMonth,
           dealType: 'all',
           partners: [],
           channelTypes: [],
