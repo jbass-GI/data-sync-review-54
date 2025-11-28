@@ -12,6 +12,13 @@ import {
 } from '@/components/ui/table';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { 
   Database, 
   Search, 
@@ -37,13 +44,14 @@ interface DataViewerProps {
 type SortField = 'dealName' | 'fundingDate' | 'fundedAmount' | 'mgmtFeeTotal' | 'feePercent' | 'partner' | 'dealType';
 type SortDirection = 'asc' | 'desc';
 
-const ROWS_PER_PAGE = 50;
+const ROWS_PER_PAGE_OPTIONS = [25, 50, 100, 200, 500];
 
 export function DataViewer({ deals, isOpen, onClose }: DataViewerProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [sortField, setSortField] = useState<SortField>('fundingDate');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [currentPage, setCurrentPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState(50);
 
   const filteredAndSortedDeals = useMemo(() => {
     let result = [...deals];
@@ -91,10 +99,10 @@ export function DataViewer({ deals, isOpen, onClose }: DataViewerProps) {
     return result;
   }, [deals, searchTerm, sortField, sortDirection]);
 
-  const totalPages = Math.ceil(filteredAndSortedDeals.length / ROWS_PER_PAGE);
+  const totalPages = Math.ceil(filteredAndSortedDeals.length / rowsPerPage);
   const paginatedDeals = filteredAndSortedDeals.slice(
-    (currentPage - 1) * ROWS_PER_PAGE,
-    currentPage * ROWS_PER_PAGE
+    (currentPage - 1) * rowsPerPage,
+    currentPage * rowsPerPage
   );
 
   const handleSort = (field: SortField) => {
@@ -234,7 +242,7 @@ export function DataViewer({ deals, isOpen, onClose }: DataViewerProps) {
             </TableHeader>
             <TableBody>
               {paginatedDeals.map((deal, index) => {
-                const rowNumber = (currentPage - 1) * ROWS_PER_PAGE + index + 1;
+                const rowNumber = (currentPage - 1) * rowsPerPage + index + 1;
                 const isNew = deal.dealType.toLowerCase().includes('new') || deal.dealType.toLowerCase() === 'n';
                 
                 return (
@@ -277,8 +285,31 @@ export function DataViewer({ deals, isOpen, onClose }: DataViewerProps) {
 
         {/* Pagination */}
         <div className="flex items-center justify-between p-4 border-t border-border bg-card">
-          <div className="text-sm text-muted-foreground">
-            Showing {((currentPage - 1) * ROWS_PER_PAGE) + 1} - {Math.min(currentPage * ROWS_PER_PAGE, filteredAndSortedDeals.length)} of {filteredAndSortedDeals.length}
+          <div className="flex items-center gap-4">
+            <div className="text-sm text-muted-foreground">
+              Showing {((currentPage - 1) * rowsPerPage) + 1} - {Math.min(currentPage * rowsPerPage, filteredAndSortedDeals.length)} of {filteredAndSortedDeals.length}
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">Rows:</span>
+              <Select
+                value={rowsPerPage.toString()}
+                onValueChange={(value) => {
+                  setRowsPerPage(Number(value));
+                  setCurrentPage(1);
+                }}
+              >
+                <SelectTrigger className="w-[80px] h-8">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {ROWS_PER_PAGE_OPTIONS.map((option) => (
+                    <SelectItem key={option} value={option.toString()}>
+                      {option}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
           <div className="flex items-center gap-2">
             <Button
