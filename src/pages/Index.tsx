@@ -455,8 +455,8 @@ const Index = () => {
             {/* KPI Metrics */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               <MetricCard
-                title={isComparisonActive ? `${comparisonConfig?.currentPeriod.label} Funded` : displayLabels.fundedLabel}
-                value={formatCurrency(metrics!.totalFunded)}
+                title={isComparisonActive && comparisonConfig ? `${comparisonConfig.currentPeriod.label} Funded` : displayLabels.fundedLabel}
+                value={formatCurrency(isComparisonActive && comparisonResult ? comparisonResult.current.totalFunded : metrics!.totalFunded)}
                 icon={DollarSign}
                 trend={comparisonResult && comparisonResult.percentChanges.totalFunded >= 0 ? "up" : "down"}
                 trendValue={
@@ -468,7 +468,7 @@ const Index = () => {
               />
               <MetricCard
                 title="Management Fees"
-                value={formatCurrency(metrics!.totalFees)}
+                value={formatCurrency(isComparisonActive && comparisonResult ? comparisonResult.current.totalFees : metrics!.totalFees)}
                 subValue={isComparisonActive && comparisonResult 
                   ? `${comparisonResult.percentChanges.totalFees >= 0 ? '+' : ''}${comparisonResult.percentChanges.totalFees.toFixed(1)}%`
                   : `Avg ${formatPercent(metrics!.avgFeePercent)}`
@@ -479,7 +479,7 @@ const Index = () => {
               />
               <MetricCard
                 title="Average Ticket Size"
-                value={formatCurrency(metrics!.avgTicketSize)}
+                value={formatCurrency(isComparisonActive && comparisonResult ? comparisonResult.current.avgTicketSize : metrics!.avgTicketSize)}
                 icon={TrendingUp}
                 trend={comparisonResult && comparisonResult.percentChanges.avgTicketSize >= 0 ? "up" : "down"}
                 trendValue={comparisonResult 
@@ -490,7 +490,7 @@ const Index = () => {
               />
               <MetricCard
                 title="Total Deals"
-                value={metrics!.dealCount.toString()}
+                value={(isComparisonActive && comparisonResult ? comparisonResult.current.dealCount : metrics!.dealCount).toString()}
                 subValue={isComparisonActive && comparisonResult
                   ? `${comparisonResult.percentChanges.dealCount >= 0 ? '+' : ''}${comparisonResult.percentChanges.dealCount.toFixed(1)}%`
                   : displayLabels.dealsLabel
@@ -512,8 +512,13 @@ const Index = () => {
 
             {/* Deal Type Mix */}
             <DealTypeChart
-              newDealsFunded={metrics!.newDealsFunded}
-              renewalDealsFunded={metrics!.renewalDealsFunded}
+              newDealsFunded={isComparisonActive && comparisonResult ? comparisonResult.current.newDealsFunded : metrics!.newDealsFunded}
+              renewalDealsFunded={isComparisonActive && comparisonResult ? comparisonResult.current.renewalDealsFunded : metrics!.renewalDealsFunded}
+              comparisonNewDealsFunded={comparisonResult?.comparison.newDealsFunded}
+              comparisonRenewalDealsFunded={comparisonResult?.comparison.renewalDealsFunded}
+              currentPeriodLabel={comparisonConfig?.currentPeriod.label}
+              comparisonPeriodLabel={comparisonConfig?.comparisonPeriod.label}
+              isComparisonActive={isComparisonActive && !!comparisonResult}
             />
 
             {/* Trend Charts */}
