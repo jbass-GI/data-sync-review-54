@@ -10,11 +10,12 @@ export async function loadDefaultFundingData(): Promise<Deal[]> {
   const data = new Uint8Array(arrayBuffer);
   
   const workbook = XLSX.read(data, { type: 'array', cellDates: true });
-  const sheetName = workbook.SheetNames[0];
-  const worksheet = workbook.Sheets[sheetName];
-  const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
-  
   const deals: Deal[] = [];
+  
+  // Process all sheets in the workbook
+  for (const sheetName of workbook.SheetNames) {
+    const worksheet = workbook.Sheets[sheetName];
+    const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
   
   // Process data rows (skip headers)
   for (let i = 2; i < jsonData.length; i++) {
@@ -76,6 +77,7 @@ export async function loadDefaultFundingData(): Promise<Deal[]> {
       dealType,
       notes
     });
+    }
   }
   
   return deals;
