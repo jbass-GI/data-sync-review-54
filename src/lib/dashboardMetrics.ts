@@ -1,5 +1,5 @@
 import { Deal, PartnerMetrics, DashboardMetrics } from '@/types/dashboard';
-import { getChannelType, isDealTypeNew } from './parseExcel';
+import { getChannelType, isDealTypeNew, isDealTypeRenewal } from './parseExcel';
 import { differenceInDays } from 'date-fns';
 import { calculateAllPartnerConsistency } from './streakAnalysis';
 
@@ -32,7 +32,7 @@ export function calculateDashboardMetrics(deals: Deal[], dateRange?: { from: Dat
   const targetProgress = targetAmount > 0 ? (totalFunded / targetAmount) * 100 : 0;
   
   const newDeals = deals.filter(d => isDealTypeNew(d.dealType));
-  const renewalDeals = deals.filter(d => !isDealTypeNew(d.dealType));
+  const renewalDeals = deals.filter(d => isDealTypeRenewal(d.dealType));
   
   const newDealsFunded = newDeals.reduce((sum, deal) => sum + deal.fundedAmount, 0);
   const renewalDealsFunded = renewalDeals.reduce((sum, deal) => sum + deal.fundedAmount, 0);
@@ -74,7 +74,7 @@ export function calculatePartnerMetrics(deals: Deal[]): PartnerMetrics[] {
     const channelType = getChannelType(partner);
     
     const newDealsCount = partnerDeals.filter(d => isDealTypeNew(d.dealType)).length;
-    const renewalDealsCount = dealCount - newDealsCount;
+    const renewalDealsCount = partnerDeals.filter(d => isDealTypeRenewal(d.dealType)).length;
     
     const consistency = consistencyMetrics.get(partner);
     

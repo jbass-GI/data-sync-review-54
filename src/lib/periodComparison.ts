@@ -283,12 +283,28 @@ function calculatePeriodMetrics(deals: Deal[]): PeriodMetrics {
   const avgTicketSize = dealCount > 0 ? totalFunded / dealCount : 0;
   const avgFeePercent = totalFunded > 0 ? (totalFees / totalFunded) * 100 : 0;
   
+  // More flexible detection - check for various renewal indicators
+  const isRenewal = (dealType: string) => {
+    const normalized = dealType.toLowerCase();
+    return normalized.includes('renew') || 
+           normalized.includes('rnw') || 
+           normalized.includes('renewal') ||
+           normalized === 'r' ||
+           normalized === 'rn';
+  };
+  
+  const isNew = (dealType: string) => {
+    const normalized = dealType.toLowerCase();
+    // New deals: contains "new" but not any renewal indicators
+    return (normalized.includes('new') || normalized === 'n') && !isRenewal(dealType);
+  };
+  
   const newDealsFunded = deals
-    .filter(d => d.dealType.toLowerCase().includes('new'))
+    .filter(d => isNew(d.dealType))
     .reduce((sum, d) => sum + d.fundedAmount, 0);
   
   const renewalDealsFunded = deals
-    .filter(d => d.dealType.toLowerCase().includes('renewal'))
+    .filter(d => isRenewal(d.dealType))
     .reduce((sum, d) => sum + d.fundedAmount, 0);
 
   return {
