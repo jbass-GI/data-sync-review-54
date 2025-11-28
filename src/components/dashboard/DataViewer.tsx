@@ -28,7 +28,9 @@ import {
   ChevronRight,
   ChevronsLeft,
   ChevronsRight,
-  X
+  X,
+  GripVertical,
+  Columns
 } from 'lucide-react';
 import { Deal } from '@/types/dashboard';
 import { formatCurrency } from '@/lib/dashboardMetrics';
@@ -54,6 +56,27 @@ type SortDirection = 'asc' | 'desc';
 
 const ROWS_PER_PAGE_OPTIONS = [25, 50, 100, 200, 500];
 
+type ColumnId = 'dealName' | 'fundingDate' | 'fundedAmount' | 'mgmtFeeTotal' | 'feePercent' | 'partner' | 'dealType' | 'notes';
+
+interface ColumnConfig {
+  id: ColumnId;
+  label: string;
+  sortable: boolean;
+  align: 'left' | 'right';
+  sortField?: SortField;
+}
+
+const DEFAULT_COLUMNS: ColumnConfig[] = [
+  { id: 'dealName', label: 'Deal Name', sortable: true, align: 'left', sortField: 'dealName' },
+  { id: 'fundingDate', label: 'Funding Date', sortable: true, align: 'left', sortField: 'fundingDate' },
+  { id: 'fundedAmount', label: 'Funded Amount', sortable: true, align: 'right', sortField: 'fundedAmount' },
+  { id: 'mgmtFeeTotal', label: 'Mgmt Fee', sortable: true, align: 'right', sortField: 'mgmtFeeTotal' },
+  { id: 'feePercent', label: 'Fee %', sortable: true, align: 'right', sortField: 'feePercent' },
+  { id: 'partner', label: 'Partner', sortable: true, align: 'left', sortField: 'partner' },
+  { id: 'dealType', label: 'Type', sortable: true, align: 'left', sortField: 'dealType' },
+  { id: 'notes', label: 'Notes', sortable: false, align: 'left' },
+];
+
 export function DataViewer({ 
   deals, 
   allDeals,
@@ -71,6 +94,9 @@ export function DataViewer({
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(50);
+  const [columns, setColumns] = useState<ColumnConfig[]>(DEFAULT_COLUMNS);
+  const [isReorderMode, setIsReorderMode] = useState(false);
+  const [draggedColumn, setDraggedColumn] = useState<ColumnId | null>(null);
 
   const filteredAndSortedDeals = useMemo(() => {
     let result = [...deals];
@@ -140,6 +166,54 @@ export function DataViewer({
       : <ArrowDown className="h-4 w-4 text-primary" />;
   };
 
+  const handleDragStart = (columnId: ColumnId) => {
+    setDraggedColumn(columnId);
+  };
+
+  const handleDragOver = (e: React.DragEvent, targetColumnId: ColumnId) => {
+    e.preventDefault();
+    if (!draggedColumn || draggedColumn === targetColumnId) return;
+    
+    const newColumns = [...columns];
+    const draggedIndex = newColumns.findIndex(c => c.id === draggedColumn);
+    const targetIndex = newColumns.findIndex(c => c.id === targetColumnId);
+    
+    const [removed] = newColumns.splice(draggedIndex, 1);
+    newColumns.splice(targetIndex, 0, removed);
+    setColumns(newColumns);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedColumn(null);
+  };
+
+  const renderCellContent = (deal: Deal, columnId: ColumnId, isNew: boolean) => {
+    switch (columnId) {
+      case 'dealName':
+        return <span className="font-medium max-w-[200px] truncate block" title={deal.dealName}>{deal.dealName}</span>;
+      case 'fundingDate':
+        return format(deal.fundingDate, 'MMM d, yyyy');
+      case 'fundedAmount':
+        return <span className="font-mono">{formatCurrency(deal.fundedAmount)}</span>;
+      case 'mgmtFeeTotal':
+        return <span className="font-mono">{formatCurrency(deal.mgmtFeeTotal)}</span>;
+      case 'feePercent':
+        return <span className="font-mono">{deal.feePercent.toFixed(2)}%</span>;
+      case 'partner':
+        return <span className="max-w-[150px] truncate block" title={deal.partner}>{deal.partner}</span>;
+      case 'dealType':
+        return (
+          <Badge variant={isNew ? "default" : "secondary"} className="text-xs">
+            {isNew ? 'New' : 'Renewal'}
+          </Badge>
+        );
+      case 'notes':
+        return <span className="max-w-[150px] truncate block text-muted-foreground text-sm" title={deal.notes || ''}>{deal.notes || '-'}</span>;
+      default:
+        return null;
+    }
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -190,6 +264,15 @@ export function DataViewer({
               className="pl-9"
             />
           </div>
+          <Button
+            variant={isReorderMode ? "default" : "outline"}
+            size="sm"
+            onClick={() => setIsReorderMode(!isReorderMode)}
+            className="gap-2"
+          >
+            <Columns className="h-4 w-4" />
+            {isReorderMode ? 'Done Reordering' : 'Reorder Columns'}
+          </Button>
           <div className="flex items-center gap-2">
             <Badge variant="secondary">
               Total Funded: {formatCurrency(filteredAndSortedDeals.reduce((sum, d) => sum + d.fundedAmount, 0))}
@@ -206,70 +289,29 @@ export function DataViewer({
             <TableHeader className="sticky top-0 bg-card z-10">
               <TableRow>
                 <TableHead className="w-[50px] text-center">#</TableHead>
-                <TableHead 
-                  className="cursor-pointer hover:bg-muted/50 transition-colors"
-                  onClick={() => handleSort('dealName')}
-                >
-                  <div className="flex items-center gap-2">
-                    Deal Name
-                    <SortIcon field="dealName" />
-                  </div>
-                </TableHead>
-                <TableHead 
-                  className="cursor-pointer hover:bg-muted/50 transition-colors"
-                  onClick={() => handleSort('fundingDate')}
-                >
-                  <div className="flex items-center gap-2">
-                    Funding Date
-                    <SortIcon field="fundingDate" />
-                  </div>
-                </TableHead>
-                <TableHead 
-                  className="cursor-pointer hover:bg-muted/50 transition-colors text-right"
-                  onClick={() => handleSort('fundedAmount')}
-                >
-                  <div className="flex items-center gap-2 justify-end">
-                    Funded Amount
-                    <SortIcon field="fundedAmount" />
-                  </div>
-                </TableHead>
-                <TableHead 
-                  className="cursor-pointer hover:bg-muted/50 transition-colors text-right"
-                  onClick={() => handleSort('mgmtFeeTotal')}
-                >
-                  <div className="flex items-center gap-2 justify-end">
-                    Mgmt Fee
-                    <SortIcon field="mgmtFeeTotal" />
-                  </div>
-                </TableHead>
-                <TableHead 
-                  className="cursor-pointer hover:bg-muted/50 transition-colors text-right"
-                  onClick={() => handleSort('feePercent')}
-                >
-                  <div className="flex items-center gap-2 justify-end">
-                    Fee %
-                    <SortIcon field="feePercent" />
-                  </div>
-                </TableHead>
-                <TableHead 
-                  className="cursor-pointer hover:bg-muted/50 transition-colors"
-                  onClick={() => handleSort('partner')}
-                >
-                  <div className="flex items-center gap-2">
-                    Partner
-                    <SortIcon field="partner" />
-                  </div>
-                </TableHead>
-                <TableHead 
-                  className="cursor-pointer hover:bg-muted/50 transition-colors"
-                  onClick={() => handleSort('dealType')}
-                >
-                  <div className="flex items-center gap-2">
-                    Type
-                    <SortIcon field="dealType" />
-                  </div>
-                </TableHead>
-                <TableHead>Notes</TableHead>
+                {columns.map((column) => (
+                  <TableHead
+                    key={column.id}
+                    className={`
+                      ${column.sortable && !isReorderMode ? 'cursor-pointer hover:bg-muted/50' : ''} 
+                      ${isReorderMode ? 'cursor-grab active:cursor-grabbing' : ''}
+                      ${column.align === 'right' ? 'text-right' : ''}
+                      ${draggedColumn === column.id ? 'opacity-50 bg-primary/10' : ''}
+                      transition-colors
+                    `}
+                    draggable={isReorderMode}
+                    onDragStart={() => isReorderMode && handleDragStart(column.id)}
+                    onDragOver={(e) => isReorderMode && handleDragOver(e, column.id)}
+                    onDragEnd={handleDragEnd}
+                    onClick={() => !isReorderMode && column.sortable && column.sortField && handleSort(column.sortField)}
+                  >
+                    <div className={`flex items-center gap-2 ${column.align === 'right' ? 'justify-end' : ''}`}>
+                      {isReorderMode && <GripVertical className="h-4 w-4 text-muted-foreground" />}
+                      {column.label}
+                      {column.sortable && column.sortField && !isReorderMode && <SortIcon field={column.sortField} />}
+                    </div>
+                  </TableHead>
+                ))}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -282,32 +324,14 @@ export function DataViewer({
                     <TableCell className="text-center text-muted-foreground text-sm">
                       {rowNumber}
                     </TableCell>
-                    <TableCell className="font-medium max-w-[200px] truncate" title={deal.dealName}>
-                      {deal.dealName}
-                    </TableCell>
-                    <TableCell>
-                      {format(deal.fundingDate, 'MMM d, yyyy')}
-                    </TableCell>
-                    <TableCell className="text-right font-mono">
-                      {formatCurrency(deal.fundedAmount)}
-                    </TableCell>
-                    <TableCell className="text-right font-mono">
-                      {formatCurrency(deal.mgmtFeeTotal)}
-                    </TableCell>
-                    <TableCell className="text-right font-mono">
-                      {deal.feePercent.toFixed(2)}%
-                    </TableCell>
-                    <TableCell className="max-w-[150px] truncate" title={deal.partner}>
-                      {deal.partner}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={isNew ? "default" : "secondary"} className="text-xs">
-                        {isNew ? 'New' : 'Renewal'}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="max-w-[150px] truncate text-muted-foreground text-sm" title={deal.notes || ''}>
-                      {deal.notes || '-'}
-                    </TableCell>
+                    {columns.map((column) => (
+                      <TableCell 
+                        key={column.id} 
+                        className={column.align === 'right' ? 'text-right' : ''}
+                      >
+                        {renderCellContent(deal, column.id, isNew)}
+                      </TableCell>
+                    ))}
                   </TableRow>
                 );
               })}
