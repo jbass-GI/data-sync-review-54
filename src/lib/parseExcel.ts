@@ -90,22 +90,14 @@ export function getChannelType(partner: string): 'Direct' | 'ISO' {
 }
 
 export function isDealTypeNew(dealType: string): boolean {
-  const normalized = dealType.toLowerCase();
-  // Check for renewal indicators first
-  const isRenewal = normalized.includes('renew') || 
-                    normalized.includes('rnw') || 
-                    normalized === 'r' ||
-                    normalized === 'rn';
-  // New if contains "new" or is just "n" but not a renewal
-  return (normalized.includes('new') || normalized === 'n') && !isRenewal;
+  const normalized = dealType.toLowerCase().trim();
+  // New deals: contains "new" or is just "n"
+  return normalized.includes('new') || normalized === 'n';
 }
 
 export function isDealTypeRenewal(dealType: string): boolean {
-  const normalized = dealType.toLowerCase();
-  return normalized.includes('renew') || 
-         normalized.includes('rnw') || 
-         normalized === 'r' ||
-         normalized === 'rn';
+  // Everything that's not a new deal is a renewal
+  return !isDealTypeNew(dealType);
 }
 
 export function getTicketSizeBucket(amount: number): string {
