@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
-import { DollarSign, TrendingUp, FileText, Percent, TrendingDown } from 'lucide-react';
+import { DollarSign, TrendingUp, FileText, Percent, TrendingDown, Database } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { MetricCard } from '@/components/dashboard/MetricCard';
 import { ProgressBar } from '@/components/dashboard/ProgressBar';
@@ -14,6 +14,8 @@ import { MTDTracking } from '@/components/dashboard/MTDTracking';
 import { TrendCharts } from '@/components/dashboard/TrendCharts';
 import { PartnerComparison } from '@/components/dashboard/PartnerComparison';
 import { ExportMenu } from '@/components/dashboard/ExportMenu';
+import { DataViewer } from '@/components/dashboard/DataViewer';
+import { Button } from '@/components/ui/button';
 import { parseExcelFile } from '@/lib/parseExcel';
 import { loadDefaultFundingData } from '@/lib/loadDefaultData';
 import { calculateDashboardMetrics, calculatePartnerMetrics, formatCurrency, formatPercent } from '@/lib/dashboardMetrics';
@@ -27,6 +29,7 @@ import glazerLogo from '@/assets/glazer-logo.png';
 const Index = () => {
   const [deals, setDeals] = useState<Deal[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [showDataViewer, setShowDataViewer] = useState(false);
   const { toast } = useToast();
   
   // Check if there's MTD data
@@ -342,12 +345,23 @@ const Index = () => {
             </div>
             <div className="flex items-center gap-4">
               {deals.length > 0 && (
-                <ExportMenu 
-                  deals={filteredDeals}
-                  partners={partnerMetrics}
-                  metrics={metrics}
-                  filters={filters}
-                />
+                <>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowDataViewer(true)}
+                    className="gap-2"
+                  >
+                    <Database className="h-4 w-4" />
+                    View Data
+                  </Button>
+                  <ExportMenu 
+                    deals={filteredDeals}
+                    partners={partnerMetrics}
+                    metrics={metrics}
+                    filters={filters}
+                  />
+                </>
               )}
               <div className="text-right border-l border-border/50 pl-4">
                 {deals.length > 0 ? (
@@ -574,6 +588,13 @@ const Index = () => {
           </div>
         )}
       </main>
+
+      {/* Data Viewer Modal */}
+      <DataViewer 
+        deals={deals}
+        isOpen={showDataViewer}
+        onClose={() => setShowDataViewer(false)}
+      />
     </div>
   );
 };
