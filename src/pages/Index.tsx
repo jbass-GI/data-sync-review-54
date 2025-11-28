@@ -236,7 +236,7 @@ const Index = () => {
   const weeklyTrends = useMemo(() => calculateWeeklyTrends(filteredDeals), [filteredDeals]);
   const monthlyTrends = useMemo(() => calculateMonthlyTrends(filteredDeals), [filteredDeals]);
 
-  const availablePeriods = useMemo(() => 
+  const availablePeriods = useMemo(() =>
     getAvailablePeriodsFromData(deals),
     [deals]
   );
@@ -253,6 +253,45 @@ const Index = () => {
     const customComparisonOption = findPeriodOption(selectedComparisonPeriod);
     return getComparisonPeriods(comparisonType, new Date(), customCurrentOption, customComparisonOption);
   }, [comparisonType, selectedCurrentPeriod, selectedComparisonPeriod, availablePeriods]);
+
+  // Calculate comparison period trends
+  const comparisonPeriodDeals = useMemo(() => {
+    if (!comparisonConfig) return [];
+    return deals.filter(deal => {
+      const dealDate = deal.fundingDate;
+      return dealDate >= comparisonConfig.comparisonPeriod.startDate && 
+             dealDate <= comparisonConfig.comparisonPeriod.endDate;
+    });
+  }, [deals, comparisonConfig]);
+
+  const currentPeriodDeals = useMemo(() => {
+    if (!comparisonConfig) return [];
+    return deals.filter(deal => {
+      const dealDate = deal.fundingDate;
+      return dealDate >= comparisonConfig.currentPeriod.startDate && 
+             dealDate <= comparisonConfig.currentPeriod.endDate;
+    });
+  }, [deals, comparisonConfig]);
+
+  const comparisonWeeklyTrends = useMemo(() => 
+    isComparisonActive ? calculateWeeklyTrends(comparisonPeriodDeals) : [],
+    [comparisonPeriodDeals, isComparisonActive]
+  );
+  
+  const comparisonMonthlyTrends = useMemo(() => 
+    isComparisonActive ? calculateMonthlyTrends(comparisonPeriodDeals) : [],
+    [comparisonPeriodDeals, isComparisonActive]
+  );
+
+  const currentWeeklyTrends = useMemo(() => 
+    isComparisonActive ? calculateWeeklyTrends(currentPeriodDeals) : weeklyTrends,
+    [currentPeriodDeals, weeklyTrends, isComparisonActive]
+  );
+  
+  const currentMonthlyTrends = useMemo(() => 
+    isComparisonActive ? calculateMonthlyTrends(currentPeriodDeals) : monthlyTrends,
+    [currentPeriodDeals, monthlyTrends, isComparisonActive]
+  );
 
   const comparisonResult = useMemo(() => {
     if (!comparisonConfig) return null;
@@ -476,10 +515,15 @@ const Index = () => {
             />
 
             {/* Trend Charts */}
-            {(weeklyTrends.length > 0 || monthlyTrends.length > 0) && (
+            {(currentWeeklyTrends.length > 0 || currentMonthlyTrends.length > 0) && (
               <TrendCharts
-                weeklyTrends={weeklyTrends}
-                monthlyTrends={monthlyTrends}
+                weeklyTrends={currentWeeklyTrends}
+                monthlyTrends={currentMonthlyTrends}
+                comparisonWeeklyTrends={comparisonWeeklyTrends}
+                comparisonMonthlyTrends={comparisonMonthlyTrends}
+                currentPeriodLabel={comparisonConfig?.currentPeriod.label}
+                comparisonPeriodLabel={comparisonConfig?.comparisonPeriod.label}
+                isComparisonActive={isComparisonActive}
               />
             )}
 
