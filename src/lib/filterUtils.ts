@@ -1,10 +1,10 @@
 import { Deal } from '@/types/dashboard';
-import { startOfMonth, endOfMonth, startOfQuarter, endOfQuarter, startOfYear, endOfYear, subDays, subMonths, subQuarters } from 'date-fns';
+import { startOfMonth, endOfMonth, startOfQuarter, endOfQuarter, startOfYear, endOfYear, subDays, subMonths, subQuarters, format } from 'date-fns';
 
 export interface DashboardFilters {
   datePreset: string;
   customDateRange?: { from: Date; to?: Date };
-  dealType: 'all' | 'new' | 'renewal'; // Simple deal type filter
+  dealType: 'all' | 'new' | 'renewal';
   partners: string[];
   channelTypes: string[];
   lifecycleTypes: string[];
@@ -13,20 +13,11 @@ export interface DashboardFilters {
   quarters: string[];
 }
 
-export const DATE_PRESETS = [
-  { value: 'mtd', label: 'MTD (Month-to-Date)' },
-  { value: 'today', label: 'Today' },
-  { value: 'yesterday', label: 'Yesterday' },
-  { value: 'last7', label: 'Last 7 Days' },
-  { value: 'last30', label: 'Last 30 Days' },
-  { value: 'qtd', label: 'QTD (Quarter-to-Date)' },
-  { value: 'ytd', label: 'YTD (Year-to-Date)' },
-  { value: 'lastMonth', label: 'Last Month' },
-  { value: 'lastQuarter', label: 'Last Quarter' },
-  { value: 'lastYear', label: 'Last Year' },
-  { value: 'last12months', label: 'Last 12 Months' },
-  { value: 'custom', label: 'Custom Range' }
-];
+export interface DatePreset {
+  value: string;
+  label: string;
+  group?: string;
+}
 
 /**
  * Get available years from deals
@@ -39,7 +30,43 @@ export function getAvailableYears(deals: Deal[]): number[] {
     years.add(deal.fundingDate.getFullYear());
   });
   
-  return Array.from(years).sort((a, b) => b - a); // Most recent first
+  return Array.from(years).sort((a, b) => b - a);
+}
+
+/**
+ * Get available months from deals (most recent first)
+ */
+export function getAvailableMonthsFromData(deals: Deal[]): { value: string; label: string }[] {
+  if (deals.length === 0) return [];
+  
+  const monthsMap = new Map<string, Date>();
+  deals.forEach(deal => {
+    const key = format(deal.fundingDate, 'yyyy-MM');
+    if (!monthsMap.has(key)) {
+      monthsMap.set(key, startOfMonth(deal.fundingDate));
+    }
+  });
+  
+  return Array.from(monthsMap.entries())
+    .sort((a, b) => b[0].localeCompare(a[0]))
+    .map(([key, date]) => ({
+      value: `month-${key}`,
+      label: format(date, 'MMMM yyyy')
+    }));
+}
+
+/**
+ * Get data date range info
+ */
+export function getDataDateRange(deals: Deal[]): { min: Date; max: Date; spansDays: number } | null {
+  if (deals.length === 0) return null;
+  
+  const dates = deals.map(d => d.fundingDate.getTime());
+  const min = new Date(Math.min(...dates));
+  const max = new Date(Math.max(...dates));
+  const spansDays = Math.ceil((max.getTime() - min.getTime()) / (1000 * 60 * 60 * 24));
+  
+  return { min, max, spansDays };
 }
 
 /**
@@ -60,30 +87,83 @@ export function hasDealsinPeriod(deals: Deal[], preset: string): boolean {
 /**
  * Get date presets dynamically based on available data
  */
-export function getDatePresets(deals: Deal[]): typeof DATE_PRESETS {
-  const basePresets = [...DATE_PRESETS];
-  const years = getAvailableYears(deals);
+export function getDatePresets(deals: Deal[]): DatePreset[] {
+  const presets: DatePreset[] = [];
+  const dateRange = getDataDateRange(deals);
+  const now = new Date();
   
-  // Filter out MTD if no data exists in current month-to-date period
-  const hasMTDData = hasDealsinPeriod(deals, 'mtd');
-  const filteredPresets = hasMTDData 
-    ? basePresets 
-    : basePresets.filter(p => p.value !== 'mtd');
+  // Always add "All Time" first
+  presets.push({ value: 'all', label: 'All Time', group: 'overview' });
   
-  // If data spans multiple years, add year options
-  if (years.length > 1) {
-    const yearPresets = years.map(year => ({
-      value: `year-${year}`,
-      label: `${year}`
-    }));
-    
-    // Insert year presets before "custom"
-    const customIndex = filteredPresets.findIndex(p => p.value === 'custom');
-    filteredPresets.splice(customIndex, 0, ...yearPresets);
+  if (!dateRange) return presets;
+  
+  // Check if data is current (within last 30 days)
+  const daysSinceLastDeal = Math.ceil((now.getTime() - dateRange.max.getTime()) / (1000 * 60 * 60 * 24));
+  const isCurrentData = daysSinceLastDeal <= 30;
+  
+  // Current period presets (only if data is recent)
+  if (isCurrentData) {
+    if (hasDealsinPeriod(deals, 'mtd')) {
+      presets.push({ value: 'mtd', label: 'Month to Date', group: 'current' });
+    }
+    if (hasDealsinPeriod(deals, 'qtd')) {
+      presets.push({ value: 'qtd', label: 'Quarter to Date', group: 'current' });
+    }
+    if (hasDealsinPeriod(deals, 'ytd')) {
+      presets.push({ value: 'ytd', label: 'Year to Date', group: 'current' });
+    }
   }
   
-  return filteredPresets;
+  // Add specific months from the data (up to 6 most recent)
+  const availableMonths = getAvailableMonthsFromData(deals);
+  if (availableMonths.length > 0) {
+    availableMonths.slice(0, 6).forEach(month => {
+      presets.push({ value: month.value, label: month.label, group: 'months' });
+    });
+  }
+  
+  // Add year presets if data spans multiple years
+  const years = getAvailableYears(deals);
+  if (years.length > 1) {
+    years.forEach(year => {
+      presets.push({ value: `year-${year}`, label: `Full Year ${year}`, group: 'years' });
+    });
+  } else if (years.length === 1) {
+    presets.push({ value: `year-${years[0]}`, label: `Full Year ${years[0]}`, group: 'years' });
+  }
+  
+  // Relative presets (only add if they have data)
+  if (hasDealsinPeriod(deals, 'last30')) {
+    presets.push({ value: 'last30', label: 'Last 30 Days', group: 'relative' });
+  }
+  if (hasDealsinPeriod(deals, 'last7')) {
+    presets.push({ value: 'last7', label: 'Last 7 Days', group: 'relative' });
+  }
+  if (hasDealsinPeriod(deals, 'lastMonth')) {
+    presets.push({ value: 'lastMonth', label: 'Previous Month', group: 'relative' });
+  }
+  if (hasDealsinPeriod(deals, 'lastQuarter')) {
+    presets.push({ value: 'lastQuarter', label: 'Previous Quarter', group: 'relative' });
+  }
+  
+  // Custom range always available
+  presets.push({ value: 'custom', label: 'Custom Range...', group: 'custom' });
+  
+  return presets;
 }
+
+// Legacy constant for backward compatibility
+export const DATE_PRESETS = [
+  { value: 'all', label: 'All Time' },
+  { value: 'mtd', label: 'Month to Date' },
+  { value: 'qtd', label: 'Quarter to Date' },
+  { value: 'ytd', label: 'Year to Date' },
+  { value: 'last7', label: 'Last 7 Days' },
+  { value: 'last30', label: 'Last 30 Days' },
+  { value: 'lastMonth', label: 'Previous Month' },
+  { value: 'lastQuarter', label: 'Previous Quarter' },
+  { value: 'custom', label: 'Custom Range...' }
+];
 
 /**
  * Get display labels based on filter preset
@@ -96,6 +176,18 @@ export function getFilterDisplayLabels(preset: string) {
       fundedLabel: `Total Funded (${year})`,
       dealsLabel: `Closed in ${year}`,
       targetLabel: `${year} Annual Target Progress`
+    };
+  }
+  
+  // Handle month presets
+  if (preset.startsWith('month-')) {
+    const monthKey = preset.replace('month-', '');
+    const date = new Date(monthKey + '-01');
+    const monthLabel = format(date, 'MMMM yyyy');
+    return {
+      fundedLabel: `Total Funded (${monthLabel})`,
+      dealsLabel: `Closed in ${monthLabel}`,
+      targetLabel: `${monthLabel} Target Progress`
     };
   }
   
@@ -203,7 +295,7 @@ export const TICKET_SIZE_BUCKETS = [
  * Get date range based on preset and actual data
  */
 export function getDateRangeFromPreset(preset: string, deals?: Deal[]): { from: Date; to: Date } {
-  // Use the most recent deal date as "today" if data exists, otherwise use actual today
+  // Use the most recent deal date as reference if data exists, otherwise use actual today
   let referenceDate = new Date();
   if (deals && deals.length > 0) {
     const dealDates = deals.map(d => d.fundingDate);
@@ -214,8 +306,19 @@ export function getDateRangeFromPreset(preset: string, deals?: Deal[]): { from: 
   if (preset.startsWith('year-')) {
     const year = parseInt(preset.replace('year-', ''));
     return {
-      from: new Date(year, 0, 1), // January 1st
-      to: new Date(year, 11, 31, 23, 59, 59) // December 31st
+      from: new Date(year, 0, 1),
+      to: new Date(year, 11, 31, 23, 59, 59)
+    };
+  }
+  
+  // Handle month presets (e.g., "month-2025-01")
+  if (preset.startsWith('month-')) {
+    const monthKey = preset.replace('month-', '');
+    const [year, month] = monthKey.split('-').map(Number);
+    const monthStart = new Date(year, month - 1, 1);
+    return {
+      from: monthStart,
+      to: endOfMonth(monthStart)
     };
   }
   
@@ -255,6 +358,16 @@ export function getDateRangeFromPreset(preset: string, deals?: Deal[]): { from: 
       return { from: startOfYear(lastYearDate), to: endOfYear(lastYearDate) };
     
     case 'last12months':
+      return { from: subMonths(referenceDate, 12), to: referenceDate };
+    
+    case 'all':
+      if (deals && deals.length > 0) {
+        const dealDates = deals.map(d => d.fundingDate);
+        return {
+          from: new Date(Math.min(...dealDates.map(d => d.getTime()))),
+          to: new Date(Math.max(...dealDates.map(d => d.getTime())))
+        };
+      }
       return { from: subMonths(referenceDate, 12), to: referenceDate };
     
     default:
@@ -318,7 +431,6 @@ export function applyFilters(deals: Deal[], filters: DashboardFilters): Deal[] {
       return isAfterStart && isBeforeEnd;
     });
   } else if (filters.datePreset !== 'all') {
-    // Pass all deals to get proper reference date
     const dateRange = getDateRangeFromPreset(filters.datePreset, deals);
     filtered = filtered.filter(deal => {
       const dealDate = deal.fundingDate;

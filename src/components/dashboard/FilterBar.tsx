@@ -170,13 +170,72 @@ export function FilterBar({
               onDateRangeChange={handleCustomDateChange}
             />
           ) : (
-            <Select value={filters.datePreset} onValueChange={handleDatePresetChange}>
-              <SelectTrigger className="w-[200px] bg-background">
+          <Select value={filters.datePreset} onValueChange={handleDatePresetChange}>
+              <SelectTrigger className="w-[220px] bg-background">
                 <SelectValue placeholder="Select date range" />
               </SelectTrigger>
-              <SelectContent className="bg-background z-50">
-                {datePresets.map(preset => (
-                  <SelectItem key={preset.value} value={preset.value}>
+              <SelectContent className="bg-background z-50 max-h-[400px]">
+                {/* Group presets by category */}
+                {datePresets.filter(p => p.group === 'overview').map(preset => (
+                  <SelectItem key={preset.value} value={preset.value} className="font-medium">
+                    {preset.label}
+                  </SelectItem>
+                ))}
+                
+                {datePresets.filter(p => p.group === 'current').length > 0 && (
+                  <>
+                    <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground border-t mt-1 pt-2">
+                      Current Period
+                    </div>
+                    {datePresets.filter(p => p.group === 'current').map(preset => (
+                      <SelectItem key={preset.value} value={preset.value}>
+                        {preset.label}
+                      </SelectItem>
+                    ))}
+                  </>
+                )}
+                
+                {datePresets.filter(p => p.group === 'months').length > 0 && (
+                  <>
+                    <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground border-t mt-1 pt-2">
+                      By Month
+                    </div>
+                    {datePresets.filter(p => p.group === 'months').map(preset => (
+                      <SelectItem key={preset.value} value={preset.value}>
+                        {preset.label}
+                      </SelectItem>
+                    ))}
+                  </>
+                )}
+                
+                {datePresets.filter(p => p.group === 'years').length > 0 && (
+                  <>
+                    <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground border-t mt-1 pt-2">
+                      By Year
+                    </div>
+                    {datePresets.filter(p => p.group === 'years').map(preset => (
+                      <SelectItem key={preset.value} value={preset.value}>
+                        {preset.label}
+                      </SelectItem>
+                    ))}
+                  </>
+                )}
+                
+                {datePresets.filter(p => p.group === 'relative').length > 0 && (
+                  <>
+                    <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground border-t mt-1 pt-2">
+                      Relative
+                    </div>
+                    {datePresets.filter(p => p.group === 'relative').map(preset => (
+                      <SelectItem key={preset.value} value={preset.value}>
+                        {preset.label}
+                      </SelectItem>
+                    ))}
+                  </>
+                )}
+                
+                {datePresets.filter(p => p.group === 'custom').map(preset => (
+                  <SelectItem key={preset.value} value={preset.value} className="border-t mt-1 pt-2">
                     {preset.label}
                   </SelectItem>
                 ))}
