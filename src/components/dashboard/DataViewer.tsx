@@ -99,25 +99,25 @@ export function DataViewer({
   const [isReorderMode, setIsReorderMode] = useState(false);
   const [draggedColumn, setDraggedColumn] = useState<ColumnId | null>(null);
 
-  // Calculate unfiltered metrics from all deals
-  const unfilteredMetrics = useMemo(() => {
-    const totalFunded = allDeals.reduce((sum, d) => sum + d.fundedAmount, 0);
-    const totalFees = allDeals.reduce((sum, d) => sum + d.mgmtFeeTotal, 0);
-    const newDeals = allDeals.filter(d => isDealTypeNew(d.dealType));
-    const renewalDeals = allDeals.filter(d => !isDealTypeNew(d.dealType));
+  // Calculate metrics from filtered deals (based on dashboard filters)
+  const filteredMetrics = useMemo(() => {
+    const totalFunded = deals.reduce((sum, d) => sum + d.fundedAmount, 0);
+    const totalFees = deals.reduce((sum, d) => sum + d.mgmtFeeTotal, 0);
+    const newDeals = deals.filter(d => isDealTypeNew(d.dealType));
+    const renewalDeals = deals.filter(d => !isDealTypeNew(d.dealType));
     
     return {
-      totalDeals: allDeals.length,
+      totalDeals: deals.length,
       totalFunded,
       totalFees,
-      avgTicketSize: allDeals.length > 0 ? totalFunded / allDeals.length : 0,
+      avgTicketSize: deals.length > 0 ? totalFunded / deals.length : 0,
       avgFeePercent: totalFunded > 0 ? (totalFees / totalFunded) * 100 : 0,
       newDealsCount: newDeals.length,
       renewalDealsCount: renewalDeals.length,
       newDealsFunded: newDeals.reduce((sum, d) => sum + d.fundedAmount, 0),
       renewalDealsFunded: renewalDeals.reduce((sum, d) => sum + d.fundedAmount, 0),
     };
-  }, [allDeals]);
+  }, [deals]);
 
   const filteredAndSortedDeals = useMemo(() => {
     let result = [...deals];
@@ -295,29 +295,29 @@ export function DataViewer({
             {isReorderMode ? 'Done Reordering' : 'Reorder Columns'}
           </Button>
           
-          {/* Unfiltered Data Metrics */}
+          {/* Filtered Data Metrics */}
           <div className="flex items-center gap-3 px-3 py-1.5 bg-primary/5 border border-primary/20 rounded-lg">
-            <span className="text-xs font-medium text-muted-foreground">All Data:</span>
+            <span className="text-xs font-medium text-muted-foreground">Summary:</span>
             <div className="flex items-center gap-2 text-xs">
-              <span className="font-mono font-semibold text-foreground">{unfilteredMetrics.totalDeals.toLocaleString()}</span>
+              <span className="font-mono font-semibold text-foreground">{filteredMetrics.totalDeals.toLocaleString()}</span>
               <span className="text-muted-foreground">deals</span>
             </div>
             <div className="w-px h-4 bg-border" />
             <div className="flex items-center gap-2 text-xs">
-              <span className="font-mono font-semibold text-foreground">{formatCurrency(unfilteredMetrics.totalFunded)}</span>
+              <span className="font-mono font-semibold text-foreground">{formatCurrency(filteredMetrics.totalFunded)}</span>
               <span className="text-muted-foreground">funded</span>
             </div>
             <div className="w-px h-4 bg-border" />
             <div className="flex items-center gap-2 text-xs">
-              <span className="font-mono font-semibold text-foreground">{formatCurrency(unfilteredMetrics.totalFees)}</span>
+              <span className="font-mono font-semibold text-foreground">{formatCurrency(filteredMetrics.totalFees)}</span>
               <span className="text-muted-foreground">fees</span>
             </div>
             <div className="w-px h-4 bg-border" />
             <div className="flex items-center gap-2 text-xs">
-              <span className="font-mono font-semibold text-primary">{unfilteredMetrics.newDealsCount.toLocaleString()}</span>
+              <span className="font-mono font-semibold text-primary">{filteredMetrics.newDealsCount.toLocaleString()}</span>
               <span className="text-muted-foreground">new</span>
               <span className="text-muted-foreground">/</span>
-              <span className="font-mono font-semibold text-secondary-foreground">{unfilteredMetrics.renewalDealsCount.toLocaleString()}</span>
+              <span className="font-mono font-semibold text-secondary-foreground">{filteredMetrics.renewalDealsCount.toLocaleString()}</span>
               <span className="text-muted-foreground">renewal</span>
             </div>
           </div>
