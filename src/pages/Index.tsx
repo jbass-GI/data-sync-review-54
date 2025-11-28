@@ -455,27 +455,34 @@ const Index = () => {
             {/* KPI Metrics */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               <MetricCard
-                title={isComparisonActive && comparisonConfig ? `${comparisonConfig.currentPeriod.label} Funded` : displayLabels.fundedLabel}
+                title={isComparisonActive && comparisonConfig ? "Total Funded" : displayLabels.fundedLabel}
                 value={formatCurrency(isComparisonActive && comparisonResult ? comparisonResult.current.totalFunded : metrics!.totalFunded)}
                 icon={DollarSign}
                 trend={comparisonResult && comparisonResult.percentChanges.totalFunded >= 0 ? "up" : "down"}
                 trendValue={
                   comparisonResult 
-                    ? `${comparisonResult.percentChanges.totalFunded >= 0 ? '+' : ''}${comparisonResult.percentChanges.totalFunded.toFixed(1)}% vs ${comparisonConfig?.comparisonPeriod.label}`
+                    ? `${comparisonResult.percentChanges.totalFunded >= 0 ? '+' : ''}${comparisonResult.percentChanges.totalFunded.toFixed(1)}%`
                     : `${metrics!.dealCount} deals`
                 }
                 comparisonValue={comparisonResult ? formatCurrency(comparisonResult.comparison.totalFunded) : undefined}
+                currentPeriodLabel={comparisonConfig?.currentPeriod.label}
+                comparisonPeriodLabel={comparisonConfig?.comparisonPeriod.label}
+                isComparisonActive={isComparisonActive && !!comparisonResult}
               />
               <MetricCard
                 title="Management Fees"
                 value={formatCurrency(isComparisonActive && comparisonResult ? comparisonResult.current.totalFees : metrics!.totalFees)}
-                subValue={isComparisonActive && comparisonResult 
-                  ? `${comparisonResult.percentChanges.totalFees >= 0 ? '+' : ''}${comparisonResult.percentChanges.totalFees.toFixed(1)}%`
-                  : `Avg ${formatPercent(metrics!.avgFeePercent)}`
-                }
+                subValue={!isComparisonActive ? `Avg ${formatPercent(metrics!.avgFeePercent)}` : undefined}
                 icon={Percent}
                 trend={comparisonResult && comparisonResult.percentChanges.totalFees >= 0 ? "up" : "down"}
+                trendValue={comparisonResult 
+                  ? `${comparisonResult.percentChanges.totalFees >= 0 ? '+' : ''}${comparisonResult.percentChanges.totalFees.toFixed(1)}%`
+                  : undefined
+                }
                 comparisonValue={comparisonResult ? formatCurrency(comparisonResult.comparison.totalFees) : undefined}
+                currentPeriodLabel={comparisonConfig?.currentPeriod.label}
+                comparisonPeriodLabel={comparisonConfig?.comparisonPeriod.label}
+                isComparisonActive={isComparisonActive && !!comparisonResult}
               />
               <MetricCard
                 title="Average Ticket Size"
@@ -487,16 +494,24 @@ const Index = () => {
                   : undefined
                 }
                 comparisonValue={comparisonResult ? formatCurrency(comparisonResult.comparison.avgTicketSize) : undefined}
+                currentPeriodLabel={comparisonConfig?.currentPeriod.label}
+                comparisonPeriodLabel={comparisonConfig?.comparisonPeriod.label}
+                isComparisonActive={isComparisonActive && !!comparisonResult}
               />
               <MetricCard
                 title="Total Deals"
                 value={(isComparisonActive && comparisonResult ? comparisonResult.current.dealCount : metrics!.dealCount).toString()}
-                subValue={isComparisonActive && comparisonResult
-                  ? `${comparisonResult.percentChanges.dealCount >= 0 ? '+' : ''}${comparisonResult.percentChanges.dealCount.toFixed(1)}%`
-                  : displayLabels.dealsLabel
-                }
+                subValue={!isComparisonActive ? displayLabels.dealsLabel : undefined}
                 icon={comparisonResult && comparisonResult.percentChanges.dealCount >= 0 ? FileText : TrendingDown}
+                trend={comparisonResult && comparisonResult.percentChanges.dealCount >= 0 ? "up" : "down"}
+                trendValue={comparisonResult 
+                  ? `${comparisonResult.percentChanges.dealCount >= 0 ? '+' : ''}${comparisonResult.percentChanges.dealCount.toFixed(1)}%`
+                  : undefined
+                }
                 comparisonValue={comparisonResult ? comparisonResult.comparison.dealCount.toString() : undefined}
+                currentPeriodLabel={comparisonConfig?.currentPeriod.label}
+                comparisonPeriodLabel={comparisonConfig?.comparisonPeriod.label}
+                isComparisonActive={isComparisonActive && !!comparisonResult}
               />
             </div>
 
