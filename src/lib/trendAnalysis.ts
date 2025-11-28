@@ -31,7 +31,24 @@ export interface MonthlyTrend {
  */
 function isDealNew(dealType: string): boolean {
   const normalized = dealType.toLowerCase();
-  return normalized.includes('new') && !normalized.includes('renew');
+  // Check for renewal indicators first
+  const isRenewal = normalized.includes('renew') || 
+                    normalized.includes('rnw') || 
+                    normalized === 'r' ||
+                    normalized === 'rn';
+  // New if contains "new" or is just "n" but not a renewal
+  return (normalized.includes('new') || normalized === 'n') && !isRenewal;
+}
+
+/**
+ * Check if deal type is "Renewal"
+ */
+function isDealRenewal(dealType: string): boolean {
+  const normalized = dealType.toLowerCase();
+  return normalized.includes('renew') || 
+         normalized.includes('rnw') || 
+         normalized === 'r' ||
+         normalized === 'rn';
 }
 
 /**
@@ -64,7 +81,7 @@ export function calculateWeeklyTrends(deals: Deal[]): WeeklyTrend[] {
     const fees = weekDeals.reduce((sum, d) => sum + d.mgmtFeeTotal, 0);
 
     const newDeals = weekDeals.filter(d => isDealNew(d.dealType));
-    const renewalDeals = weekDeals.filter(d => !isDealNew(d.dealType));
+    const renewalDeals = weekDeals.filter(d => isDealRenewal(d.dealType));
 
     const newDealsFunded = newDeals.reduce((sum, d) => sum + d.fundedAmount, 0);
     const renewalDealsFunded = renewalDeals.reduce((sum, d) => sum + d.fundedAmount, 0);
@@ -113,7 +130,7 @@ export function calculateMonthlyTrends(deals: Deal[], annualTarget: number = 360
     const fees = monthDeals.reduce((sum, d) => sum + d.mgmtFeeTotal, 0);
 
     const newDeals = monthDeals.filter(d => isDealNew(d.dealType));
-    const renewalDeals = monthDeals.filter(d => !isDealNew(d.dealType));
+    const renewalDeals = monthDeals.filter(d => isDealRenewal(d.dealType));
 
     const newDealsFunded = newDeals.reduce((sum, d) => sum + d.fundedAmount, 0);
     const renewalDealsFunded = renewalDeals.reduce((sum, d) => sum + d.fundedAmount, 0);
