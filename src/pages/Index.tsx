@@ -31,6 +31,7 @@ import { calculateRepPerformance, RepPerformance } from '@/lib/repPerformance';
 import { calculateMonthlyTrends as calculateISOMonthlyTrends, MonthlyTrend } from '@/lib/trendAnalysisISO';
 import { calculateAllQualityScores, generatePerformanceAlerts, ISOQualityScore, PerformanceAlert } from '@/lib/qualityScore';
 import { SubmissionUpload } from '@/components/submissions/SubmissionUpload';
+import { GoogleSheetSync } from '@/components/submissions/GoogleSheetSync';
 import { DataQualityCard } from '@/components/submissions/DataQualityCard';
 import { ISOSummaryTable } from '@/components/submissions/ISOSummaryTable';
 import { SubmissionVolumeChart } from '@/components/submissions/SubmissionVolumeChart';
@@ -678,10 +679,12 @@ const Index = () => {
           {/* Submissions Tab */}
           <TabsContent value="submissions">
             {!submissions.length ? (
-              <div className="max-w-2xl mx-auto mt-12">
+              <div className="max-w-2xl mx-auto mt-12 space-y-6">
+                <GoogleSheetSync onDataLoaded={handleSubmissionDataLoaded} />
+                <div className="text-center text-muted-foreground text-sm">or</div>
                 <SubmissionUpload onDataLoaded={handleSubmissionDataLoaded} />
                 <p className="text-center text-muted-foreground mt-6 text-sm">
-                  Upload your Monday.com export to analyze ISO submission performance
+                  Sync from Google Sheets or upload your Monday.com export
                 </p>
               </div>
             ) : (
@@ -887,12 +890,15 @@ const Index = () => {
                 )}
                 
                 {/* Upload Options */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-4">
-                  <div>
-                    <SubmissionUpload onDataLoaded={handleSubmissionDataLoaded} />
-                  </div>
-                  <div>
-                    <FundingUpload onDataLoaded={handleFundingDataLoaded} />
+                <div className="space-y-4 pt-4">
+                  <GoogleSheetSync onDataLoaded={handleSubmissionDataLoaded} />
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div>
+                      <SubmissionUpload onDataLoaded={handleSubmissionDataLoaded} />
+                    </div>
+                    <div>
+                      <FundingUpload onDataLoaded={handleFundingDataLoaded} />
+                    </div>
                   </div>
                 </div>
               </div>
