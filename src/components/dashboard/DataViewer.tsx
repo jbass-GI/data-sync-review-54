@@ -34,6 +34,7 @@ import {
 } from 'lucide-react';
 import { Deal } from '@/types/dashboard';
 import { formatCurrency } from '@/lib/dashboardMetrics';
+import { isDealTypeNew } from '@/lib/parseExcel';
 import { format } from 'date-fns';
 import { DashboardFilters } from '@/lib/filterUtils';
 import { FilterBar } from './FilterBar';
@@ -317,7 +318,7 @@ export function DataViewer({
             <TableBody>
               {paginatedDeals.map((deal, index) => {
                 const rowNumber = (currentPage - 1) * rowsPerPage + index + 1;
-                const isNew = deal.dealType.toLowerCase().includes('new') || deal.dealType.toLowerCase() === 'n';
+                const isNew = isDealTypeNew(deal.dealType);
                 
                 return (
                   <TableRow key={`${deal.dealName}-${deal.fundingDate.toISOString()}-${index}`} className="hover:bg-muted/30">
