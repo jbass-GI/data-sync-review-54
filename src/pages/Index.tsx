@@ -15,6 +15,7 @@ import { TrendCharts } from '@/components/dashboard/TrendCharts';
 import { PartnerComparison } from '@/components/dashboard/PartnerComparison';
 import { ExportMenu } from '@/components/dashboard/ExportMenu';
 import { parseExcelFile } from '@/lib/parseExcel';
+import { loadDefaultFundingData } from '@/lib/loadDefaultData';
 import { calculateDashboardMetrics, calculatePartnerMetrics, formatCurrency, formatPercent } from '@/lib/dashboardMetrics';
 import { applyFilters, getFilterOptions, DashboardFilters, getDateRangeFromPreset, getFilterDisplayLabels } from '@/lib/filterUtils';
 import { calculateMTDMetrics } from '@/lib/mtdProjections';
@@ -132,6 +133,40 @@ const Index = () => {
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, [lastScrollY]);
+
+  // Auto-load default funding data on mount
+  useEffect(() => {
+    const loadDefaultData = async () => {
+      setIsLoading(true);
+      try {
+        const defaultDeals = await loadDefaultFundingData();
+        if (defaultDeals.length > 0) {
+          setDeals(defaultDeals);
+          
+          // Check if data has MTD deals
+          const now = new Date();
+          const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+          const hasMTD = defaultDeals.some(deal => deal.fundingDate >= monthStart && deal.fundingDate <= now);
+          
+          setFilters(prev => ({
+            ...prev,
+            datePreset: hasMTD ? 'mtd' : 'all'
+          }));
+          
+          toast({
+            title: "Data loaded",
+            description: `Loaded ${defaultDeals.length} deals from tracker`,
+          });
+        }
+      } catch (error) {
+        console.error('Failed to load default data:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    loadDefaultData();
+  }, []);
 
   const handleFileUpload = async (file: File, mode: 'replace' | 'append' = 'replace') => {
     setIsLoading(true);
