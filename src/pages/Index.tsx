@@ -591,9 +591,16 @@ const Index = () => {
 
       {/* Data Viewer Modal */}
       <DataViewer 
-        deals={deals}
+        deals={filteredDeals}
+        allDeals={deals}
         isOpen={showDataViewer}
         onClose={() => setShowDataViewer(false)}
+        filters={filters}
+        onFiltersChange={setFilters}
+        availablePartners={filterOptions.partners}
+        availableMonths={filterOptions.months}
+        availableQuarters={filterOptions.quarters}
+        hasMTDData={hasMTDData}
       />
     </div>
   );

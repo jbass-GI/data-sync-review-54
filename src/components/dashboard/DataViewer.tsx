@@ -1,5 +1,4 @@
 import { useState, useMemo } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import {
@@ -34,11 +33,20 @@ import {
 import { Deal } from '@/types/dashboard';
 import { formatCurrency } from '@/lib/dashboardMetrics';
 import { format } from 'date-fns';
+import { DashboardFilters } from '@/lib/filterUtils';
+import { FilterBar } from './FilterBar';
 
 interface DataViewerProps {
   deals: Deal[];
+  allDeals: Deal[];
   isOpen: boolean;
   onClose: () => void;
+  filters: DashboardFilters;
+  onFiltersChange: (filters: DashboardFilters) => void;
+  availablePartners: string[];
+  availableMonths: string[];
+  availableQuarters: string[];
+  hasMTDData: boolean;
 }
 
 type SortField = 'dealName' | 'fundingDate' | 'fundedAmount' | 'mgmtFeeTotal' | 'feePercent' | 'partner' | 'dealType';
@@ -46,7 +54,18 @@ type SortDirection = 'asc' | 'desc';
 
 const ROWS_PER_PAGE_OPTIONS = [25, 50, 100, 200, 500];
 
-export function DataViewer({ deals, isOpen, onClose }: DataViewerProps) {
+export function DataViewer({ 
+  deals, 
+  allDeals,
+  isOpen, 
+  onClose,
+  filters,
+  onFiltersChange,
+  availablePartners,
+  availableMonths,
+  availableQuarters,
+  hasMTDData
+}: DataViewerProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [sortField, setSortField] = useState<SortField>('fundingDate');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
@@ -142,6 +161,19 @@ export function DataViewer({ deals, isOpen, onClose }: DataViewerProps) {
           <Button variant="ghost" size="icon" onClick={onClose}>
             <X className="h-5 w-5" />
           </Button>
+        </div>
+
+        {/* Dashboard Filters */}
+        <div className="border-b border-border">
+          <FilterBar
+            filters={filters}
+            onFiltersChange={onFiltersChange}
+            availablePartners={availablePartners}
+            availableMonths={availableMonths}
+            availableQuarters={availableQuarters}
+            deals={allDeals}
+            hasMTDData={hasMTDData}
+          />
         </div>
 
         {/* Search and Stats */}
