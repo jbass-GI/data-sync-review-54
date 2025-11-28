@@ -99,6 +99,26 @@ export function DataViewer({
   const [isReorderMode, setIsReorderMode] = useState(false);
   const [draggedColumn, setDraggedColumn] = useState<ColumnId | null>(null);
 
+  // Calculate unfiltered metrics from all deals
+  const unfilteredMetrics = useMemo(() => {
+    const totalFunded = allDeals.reduce((sum, d) => sum + d.fundedAmount, 0);
+    const totalFees = allDeals.reduce((sum, d) => sum + d.mgmtFeeTotal, 0);
+    const newDeals = allDeals.filter(d => isDealTypeNew(d.dealType));
+    const renewalDeals = allDeals.filter(d => !isDealTypeNew(d.dealType));
+    
+    return {
+      totalDeals: allDeals.length,
+      totalFunded,
+      totalFees,
+      avgTicketSize: allDeals.length > 0 ? totalFunded / allDeals.length : 0,
+      avgFeePercent: totalFunded > 0 ? (totalFees / totalFunded) * 100 : 0,
+      newDealsCount: newDeals.length,
+      renewalDealsCount: renewalDeals.length,
+      newDealsFunded: newDeals.reduce((sum, d) => sum + d.fundedAmount, 0),
+      renewalDealsFunded: renewalDeals.reduce((sum, d) => sum + d.fundedAmount, 0),
+    };
+  }, [allDeals]);
+
   const filteredAndSortedDeals = useMemo(() => {
     let result = [...deals];
 
@@ -274,12 +294,43 @@ export function DataViewer({
             <Columns className="h-4 w-4" />
             {isReorderMode ? 'Done Reordering' : 'Reorder Columns'}
           </Button>
+          
+          {/* Unfiltered Data Metrics */}
+          <div className="flex items-center gap-3 px-3 py-1.5 bg-primary/5 border border-primary/20 rounded-lg">
+            <span className="text-xs font-medium text-muted-foreground">All Data:</span>
+            <div className="flex items-center gap-2 text-xs">
+              <span className="font-mono font-semibold text-foreground">{unfilteredMetrics.totalDeals.toLocaleString()}</span>
+              <span className="text-muted-foreground">deals</span>
+            </div>
+            <div className="w-px h-4 bg-border" />
+            <div className="flex items-center gap-2 text-xs">
+              <span className="font-mono font-semibold text-foreground">{formatCurrency(unfilteredMetrics.totalFunded)}</span>
+              <span className="text-muted-foreground">funded</span>
+            </div>
+            <div className="w-px h-4 bg-border" />
+            <div className="flex items-center gap-2 text-xs">
+              <span className="font-mono font-semibold text-foreground">{formatCurrency(unfilteredMetrics.totalFees)}</span>
+              <span className="text-muted-foreground">fees</span>
+            </div>
+            <div className="w-px h-4 bg-border" />
+            <div className="flex items-center gap-2 text-xs">
+              <span className="font-mono font-semibold text-primary">{unfilteredMetrics.newDealsCount.toLocaleString()}</span>
+              <span className="text-muted-foreground">new</span>
+              <span className="text-muted-foreground">/</span>
+              <span className="font-mono font-semibold text-secondary-foreground">{unfilteredMetrics.renewalDealsCount.toLocaleString()}</span>
+              <span className="text-muted-foreground">renewal</span>
+            </div>
+          </div>
+          
+          <div className="flex-1" />
+          
+          {/* Filtered Stats */}
           <div className="flex items-center gap-2">
             <Badge variant="secondary">
-              Total Funded: {formatCurrency(filteredAndSortedDeals.reduce((sum, d) => sum + d.fundedAmount, 0))}
+              Filtered: {formatCurrency(filteredAndSortedDeals.reduce((sum, d) => sum + d.fundedAmount, 0))}
             </Badge>
             <Badge variant="secondary">
-              Total Fees: {formatCurrency(filteredAndSortedDeals.reduce((sum, d) => sum + d.mgmtFeeTotal, 0))}
+              Fees: {formatCurrency(filteredAndSortedDeals.reduce((sum, d) => sum + d.mgmtFeeTotal, 0))}
             </Badge>
           </div>
         </div>
