@@ -91,8 +91,10 @@ export function getChannelType(partner: string): 'Direct' | 'ISO' {
 
 export function isDealTypeNew(dealType: string): boolean {
   const normalized = dealType.toLowerCase().trim();
-  // New deals: contains "new" or is just "n"
-  return normalized.includes('new') || normalized === 'n';
+  // New deals: starts with "new" (not "renew") or is just "n"
+  // Explicitly exclude "renew" since it contains "new" as a substring
+  if (normalized.startsWith('renew')) return false;
+  return normalized.startsWith('new') || normalized === 'n';
 }
 
 export function isDealTypeRenewal(dealType: string): boolean {
