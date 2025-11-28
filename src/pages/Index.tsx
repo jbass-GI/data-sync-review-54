@@ -300,9 +300,11 @@ const Index = () => {
 
   const handleComparisonToggle = () => {
     if (comparisonType === 'none') {
-      setComparisonType('ytd-vs-ytd');
+      setComparisonType('custom');
     } else {
       setComparisonType('none');
+      setSelectedCurrentPeriod(null);
+      setSelectedComparisonPeriod(null);
     }
   };
 
