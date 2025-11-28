@@ -20,7 +20,7 @@ import { calculateDashboardMetrics, calculatePartnerMetrics, formatCurrency, for
 import { applyFilters, getFilterOptions, DashboardFilters, getDateRangeFromPreset, getFilterDisplayLabels } from '@/lib/filterUtils';
 import { calculateMTDMetrics } from '@/lib/mtdProjections';
 import { calculateWeeklyTrends, calculateMonthlyTrends } from '@/lib/trendAnalysis';
-import { comparePeriods, getComparisonPeriods, ComparisonType } from '@/lib/periodComparison';
+import { comparePeriods, getComparisonPeriods, ComparisonType, getAvailablePeriodsFromData, PeriodOption } from '@/lib/periodComparison';
 import { Deal, PartnerMetrics } from '@/types/dashboard';
 import glazerLogo from '@/assets/glazer-logo.png';
 
@@ -51,6 +51,8 @@ const Index = () => {
   const [showMiniHeader, setShowMiniHeader] = useState(false);
   const [lastScrollY, setLastScrollY] = useState(0);
   const [comparisonType, setComparisonType] = useState<ComparisonType>('none');
+  const [selectedCurrentPeriod, setSelectedCurrentPeriod] = useState<string | null>(null);
+  const [selectedComparisonPeriod, setSelectedComparisonPeriod] = useState<string | null>(null);
   const isComparisonActive = comparisonType !== 'none';
 
   // Scroll detection for mini header
@@ -234,10 +236,23 @@ const Index = () => {
   const weeklyTrends = useMemo(() => calculateWeeklyTrends(filteredDeals), [filteredDeals]);
   const monthlyTrends = useMemo(() => calculateMonthlyTrends(filteredDeals), [filteredDeals]);
 
-  const comparisonConfig = useMemo(() => 
-    getComparisonPeriods(comparisonType, new Date()),
-    [comparisonType]
+  const availablePeriods = useMemo(() => 
+    getAvailablePeriodsFromData(deals),
+    [deals]
   );
+
+  // Find the selected period options for custom comparison
+  const findPeriodOption = (value: string | null): PeriodOption | undefined => {
+    if (!value) return undefined;
+    return [...availablePeriods.months, ...availablePeriods.quarters, ...availablePeriods.years]
+      .find(p => p.value === value);
+  };
+
+  const comparisonConfig = useMemo(() => {
+    const customCurrentOption = findPeriodOption(selectedCurrentPeriod);
+    const customComparisonOption = findPeriodOption(selectedComparisonPeriod);
+    return getComparisonPeriods(comparisonType, new Date(), customCurrentOption, customComparisonOption);
+  }, [comparisonType, selectedCurrentPeriod, selectedComparisonPeriod, availablePeriods]);
 
   const comparisonResult = useMemo(() => {
     if (!comparisonConfig) return null;
@@ -321,14 +336,19 @@ const Index = () => {
       )}
 
       {/* Comparison Selector */}
-      {deals.length > 0 && comparisonConfig && (
+      {deals.length > 0 && (comparisonConfig || isComparisonActive) && (
         <div className="container mx-auto px-6 pt-4">
           <ComparisonSelector
             comparisonType={comparisonType}
             onComparisonTypeChange={setComparisonType}
-            currentLabel={comparisonConfig.currentPeriod.label}
-            comparisonLabel={comparisonConfig.comparisonPeriod.label}
+            currentLabel={comparisonConfig?.currentPeriod.label || ''}
+            comparisonLabel={comparisonConfig?.comparisonPeriod.label || ''}
             isActive={isComparisonActive}
+            availablePeriods={availablePeriods}
+            selectedCurrentPeriod={selectedCurrentPeriod}
+            selectedComparisonPeriod={selectedComparisonPeriod}
+            onCurrentPeriodChange={setSelectedCurrentPeriod}
+            onComparisonPeriodChange={setSelectedComparisonPeriod}
           />
         </div>
       )}

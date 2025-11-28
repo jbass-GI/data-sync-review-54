@@ -1,9 +1,16 @@
 import { Deal } from '@/types/dashboard';
-import { startOfYear, endOfYear, startOfQuarter, endOfQuarter, startOfMonth, endOfMonth, differenceInDays, addDays, isBefore, isAfter, subYears, subQuarters, subMonths } from 'date-fns';
+import { startOfYear, endOfYear, startOfQuarter, endOfQuarter, startOfMonth, endOfMonth, differenceInDays, addDays, isBefore, isAfter, subYears, subQuarters, subMonths, format } from 'date-fns';
 
-export type ComparisonType = 'none' | 'month-vs-month' | 'quarter-vs-quarter' | 'year-vs-year' | 'ytd-vs-ytd';
+export type ComparisonType = 'none' | 'month-vs-month' | 'quarter-vs-quarter' | 'year-vs-year' | 'ytd-vs-ytd' | 'custom';
 
 export interface ComparisonPeriod {
+  label: string;
+  startDate: Date;
+  endDate: Date;
+}
+
+export interface PeriodOption {
+  value: string;
   label: string;
   startDate: Date;
   endDate: Date;
@@ -54,10 +61,109 @@ export interface ForecastPoint {
 }
 
 /**
- * Get comparison periods based on type and reference date
+ * Get available periods from data for comparison selection
  */
-export function getComparisonPeriods(type: ComparisonType, referenceDate: Date = new Date()): ComparisonConfig | null {
+export function getAvailablePeriodsFromData(deals: Deal[]): {
+  months: PeriodOption[];
+  quarters: PeriodOption[];
+  years: PeriodOption[];
+} {
+  if (deals.length === 0) {
+    return { months: [], quarters: [], years: [] };
+  }
+
+  const months: PeriodOption[] = [];
+  const quarters: PeriodOption[] = [];
+  const years: PeriodOption[] = [];
+  
+  const monthsSet = new Set<string>();
+  const quartersSet = new Set<string>();
+  const yearsSet = new Set<string>();
+
+  deals.forEach(deal => {
+    const date = deal.fundingDate;
+    const year = date.getFullYear();
+    const month = date.getMonth();
+    const quarter = Math.floor(month / 3) + 1;
+
+    // Month key
+    const monthKey = `${year}-${String(month + 1).padStart(2, '0')}`;
+    if (!monthsSet.has(monthKey)) {
+      monthsSet.add(monthKey);
+      const monthStart = startOfMonth(date);
+      const monthEnd = endOfMonth(date);
+      months.push({
+        value: monthKey,
+        label: format(monthStart, 'MMMM yyyy'),
+        startDate: monthStart,
+        endDate: monthEnd
+      });
+    }
+
+    // Quarter key
+    const quarterKey = `${year}-Q${quarter}`;
+    if (!quartersSet.has(quarterKey)) {
+      quartersSet.add(quarterKey);
+      const quarterStart = startOfQuarter(date);
+      const quarterEnd = endOfQuarter(date);
+      quarters.push({
+        value: quarterKey,
+        label: `Q${quarter} ${year}`,
+        startDate: quarterStart,
+        endDate: quarterEnd
+      });
+    }
+
+    // Year key
+    const yearKey = `${year}`;
+    if (!yearsSet.has(yearKey)) {
+      yearsSet.add(yearKey);
+      const yearStart = startOfYear(date);
+      const yearEnd = endOfYear(date);
+      years.push({
+        value: yearKey,
+        label: `${year}`,
+        startDate: yearStart,
+        endDate: yearEnd
+      });
+    }
+  });
+
+  // Sort descending (most recent first)
+  months.sort((a, b) => b.startDate.getTime() - a.startDate.getTime());
+  quarters.sort((a, b) => b.startDate.getTime() - a.startDate.getTime());
+  years.sort((a, b) => b.startDate.getTime() - a.startDate.getTime());
+
+  return { months, quarters, years };
+}
+
+/**
+ * Get comparison periods based on type, reference date, and optional custom selection
+ */
+export function getComparisonPeriods(
+  type: ComparisonType, 
+  referenceDate: Date = new Date(),
+  customCurrentPeriod?: PeriodOption,
+  customComparisonPeriod?: PeriodOption
+): ComparisonConfig | null {
   if (type === 'none') return null;
+
+  // Handle custom period selection
+  if (type === 'custom' && customCurrentPeriod && customComparisonPeriod) {
+    return {
+      type,
+      currentPeriod: {
+        label: customCurrentPeriod.label,
+        startDate: customCurrentPeriod.startDate,
+        endDate: customCurrentPeriod.endDate
+      },
+      comparisonPeriod: {
+        label: customComparisonPeriod.label,
+        startDate: customComparisonPeriod.startDate,
+        endDate: customComparisonPeriod.endDate
+      }
+    };
+  }
 
   let currentPeriod: ComparisonPeriod;
   let comparisonPeriod: ComparisonPeriod;
