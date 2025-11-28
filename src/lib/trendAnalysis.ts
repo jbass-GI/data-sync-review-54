@@ -30,25 +30,16 @@ export interface MonthlyTrend {
  * Check if deal type is "New"
  */
 function isDealNew(dealType: string): boolean {
-  const normalized = dealType.toLowerCase();
-  // Check for renewal indicators first
-  const isRenewal = normalized.includes('renew') || 
-                    normalized.includes('rnw') || 
-                    normalized === 'r' ||
-                    normalized === 'rn';
-  // New if contains "new" or is just "n" but not a renewal
-  return (normalized.includes('new') || normalized === 'n') && !isRenewal;
+  const normalized = dealType.toLowerCase().trim();
+  // New deals: contains "new" or is just "n"
+  return normalized.includes('new') || normalized === 'n';
 }
 
 /**
- * Check if deal type is "Renewal"
+ * Check if deal type is "Renewal" - anything not new is a renewal
  */
 function isDealRenewal(dealType: string): boolean {
-  const normalized = dealType.toLowerCase();
-  return normalized.includes('renew') || 
-         normalized.includes('rnw') || 
-         normalized === 'r' ||
-         normalized === 'rn';
+  return !isDealNew(dealType);
 }
 
 /**
